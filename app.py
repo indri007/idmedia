@@ -591,10 +591,11 @@ elif menu == "📚 Ensiklopedia 20 Panduan IDN":
         "hierarki penulis, skema monetisasi poin, dan 20 artikel panduan kurasi redaksi."
     )
 
-    t_mod, t_poin, t_tier = st.tabs([
+    t_mod, t_poin, t_tier, t_lic = st.tabs([
         "📖 20 Modul Panduan Resmi",
         "💰 Kalkulator Poin & Monetisasi",
         "🎖️ Jenjang Karir Penulis (Tier)",
+        "📜 Lisensi & Ketentuan Hukum",
     ])
 
     with t_mod:
@@ -643,3 +644,22 @@ elif menu == "📚 Ensiklopedia 20 Panduan IDN":
                 st.write(tier_info["deskripsi"])
                 st.caption(f"**Syarat:** {tier_info['syarat']} | **Keuntungan:** {tier_info['benefit']}")
                 st.divider()
+
+    with t_lic:
+        st.subheader("📜 Lisensi Perangkat Lunak & Hak Cipta Konten")
+        st.markdown(
+            """
+            **MIT License (Open Source Software)**  
+            *Copyright (c) 2026 Indri Kartika (IDMedia)*
+
+            Platform ini dilisensikan secara resmi menggunakan **MIT License**. Siapa pun diberikan izin secara gratis untuk menggunakan, menyalin, memodifikasi, menggabungkan, mempublikasikan, dan mendistribusikan salinan perangkat lunak ini sesuai dengan syarat lisensi MIT.
+
+            ---
+
+            ### ⚖️ Ketentuan Hak Cipta Konten & Kode Etik Redaksi:
+            1. **Kepemilikan Hak Cipta**: Seluruh teks artikel yang ditulis dan dikirimkan oleh penulis tetap merupakan hak cipta intelektual masing-masing kontributor.
+            2. **Keaslian Naskah**: Penulis wajib menjamin tulisan orisinal dan bebas dari segala bentuk plagiarisme atau pelanggaran hak cipta pihak ketiga.
+            3. **Atribusi Sumber Gambar**: Penggunaan foto/ilustrasi wajib mencantumkan sumber asli sesuai SOP gambar beresolusi baik tanpa watermark.
+            4. **Bebas SARA & Netral**: Konten yang diterbitkan tidak boleh mengandung unsur kebencian, pencemaran nama baik, atau kampanye terselubung.
+            """
+        )

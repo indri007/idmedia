@@ -6,6 +6,27 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from database import (
+    init_db,
+    kirim_artikel,
+    ambil_artikel_penulis,
+    ambil_semua_artikel,
+    ambil_artikel_terbit,
+    update_status_artikel,
+    update_isi_artikel,
+    tambah_views_artikel,
+    ambil_statistik_platform,
+)
+from auth import (
+    inisialisasi_sesi,
+    atur_sesi,
+    keluar_sesi,
+    tombol_keluar,
+    render_user_badge_sidebar,
+    halaman_login,
+    cek_login,
+    cek_peran_admin,
+)
 from src.idn_knowledge_base import (
     KATA_PENYEDAP_JUDUL,
     TEKNIK_PENUTUP,
@@ -19,7 +40,7 @@ from src.idn_knowledge_base import (
 )
 
 # ==============================================================================
-# KONFIGURASI HALAMAN
+# KONFIGURASI HALAMAN & TEMA VISUAL MATERIAL 3
 # ==============================================================================
 st.set_page_config(
     page_title="IDMedia Community — Platform Penulis Profesional",
@@ -28,7 +49,38 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-DATA_FILE = Path(__file__).parent / "data" / "articles.json"
+# Inisialisasi basis data permanen dan sesi akun pengguna
+init_db()
+inisialisasi_sesi()
+
+# Custom CSS Estetika Glassmorphism & Material 3
+st.markdown(
+    """
+    <style>
+    /* Gradient highlight untuk elemen metrik dan kartu */
+    .stMetric {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        padding: 12px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    .badge-terbit { background-color: #059669; color: #ffffff; }
+    .badge-tinjau { background-color: #d97706; color: #ffffff; }
+    .badge-revisi { background-color: #0284c7; color: #ffffff; }
+    .badge-tolak { background-color: #dc2626; color: #ffffff; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 PARTIKEL_KECIL = {
     "atau", "dan", "dengan", "ke", "per", "oleh", "ala", "buat", "tetapi",
@@ -36,32 +88,10 @@ PARTIKEL_KECIL = {
     "sebelum", "tentang", "yang", "daripada", "karena", "pada", "sampai", "tanpa", "agar"
 }
 
-def load_articles():
-    if not DATA_FILE.exists():
-        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-        return []
-    try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return []
-
-def save_articles(articles):
-    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(articles, f, ensure_ascii=False, indent=2)
-
-if "articles" not in st.session_state:
-    st.session_state.articles = load_articles()
-
-def update_and_persist(new_articles):
-    st.session_state.articles = new_articles
-    save_articles(new_articles)
-
 def validate_eyd_title(title):
     words = title.strip().split()
     if not words:
-        return True, ""
+        return True, []
     issues = []
     for i, w in enumerate(words):
         clean_w = re.sub(r"[^\w]", "", w)
@@ -90,6 +120,10 @@ with st.sidebar:
     st.title("✍️ IDMedia Hub")
     st.caption("Platform Penulisan & Kurasi Komunitas Berstandar Redaksi Nasional")
     st.markdown("---")
+
+    # Tampilkan identitas akun aktif yang terhubung
+    render_user_badge_sidebar()
+
     menu = st.radio(
         "Menu Utama",
         [
@@ -123,52 +157,52 @@ if menu == "📰 Beranda Publik":
     st.title("📰 Portal Berita & Artikel Komunitas")
     st.write(
         "Koleksi tulisan inspiratif, edukatif, dan menghibur dari para penulis komunitas "
-        "yang telah lolos kurasi 100% tim redaksi."
+        "yang telah tersimpan permanen di basis data dan lolos kurasi 100% tim redaksi."
     )
 
-    published = [a for a in st.session_state.articles if a.get("status") == "Diterbitkan"]
-
-    categories = ["Semua Kategori", "Life", "Tech", "Career", "Relationship", "Science & Tech", "Food", "Travel", "Hiburan"]
-    selected_cat = st.selectbox("Pilih Kategori:", categories)
-
-    if selected_cat != "Semua Kategori":
-        filtered = [a for a in published if a.get("kategori") == selected_cat]
-    else:
-        filtered = published
+    # Metrik Ringkasan Platform dari Basis Data Permanen
+    stats = ambil_statistik_platform()
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("📚 Naskah Terbit", f"{stats['published']} Artikel")
+    m2.metric("👁️ Total Pembaca", f"{stats['total_views']:,} Views")
+    m3.metric("👥 Penulis Terdaftar", f"{stats['total_users']} Akun")
+    m4.metric("⏳ Dalam Antrean", f"{stats['pending']} Menunggu")
 
     st.markdown("---")
 
-    if not filtered:
+    categories = ["Semua Kategori", "Life", "Tech", "Career", "Relationship", "Science & Tech", "Food", "Travel", "Hiburan"]
+    selected_cat = st.selectbox("Filter Kategori Tulisan:", categories)
+
+    df_pub = ambil_artikel_terbit(selected_cat)
+
+    if df_pub.empty:
         st.info("Belum ada artikel yang diterbitkan untuk kategori ini. Jadilah yang pertama mengirimkan karya terbaikmu!")
     else:
-        for i, art in enumerate(filtered):
+        for idx, row in df_pub.iterrows():
             with st.container():
                 col_img, col_txt = st.columns([1, 2])
                 with col_img:
-                    img_url = art.get("gambar") or "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=800&auto=format&fit=crop"
+                    img_url = row["cover_url"] or "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=800&auto=format&fit=crop"
                     st.image(img_url, use_container_width=True)
-                    caption_text = art.get("caption_gambar") or art.get("sumber_gambar") or "ilustrasi artikel (pexels.com)"
+                    caption_text = row["source_caption"] or "ilustrasi artikel (unsplash.com)"
                     st.caption(caption_text)
-                    if art.get("url_sumber"):
-                        st.caption(f"🔗 [Sumber Gambar Asli]({art['url_sumber']})")
 
                 with col_txt:
-                    st.markdown(f"**[{art.get('kategori', 'Umum')}]** · *{art.get('tanggal', '-')}*")
-                    st.subheader(art.get("judul", "Tanpa Judul"))
-                    if art.get("cuplikan"):
-                        st.markdown(f"*{art.get('cuplikan')}*")
-                    st.write(f"✍️ **Penulis:** {art.get('penulis', 'Anonim')} · 👁️ {art.get('views', 150)} Pembaca")
+                    st.markdown(f"**[{row['category']}]** · *{row['created_at'][:10]}*")
+                    st.subheader(row["title"])
+                    if row["excerpt"]:
+                        st.markdown(f"*{row['excerpt']}*")
+                    st.write(f"✍️ **Penulis:** {row['author_name']} · 👁️ {row['views']} Pembaca")
 
-                    paragraphs = [p for p in art.get("isi", "").split("\n") if p.strip() and not p.strip().startswith("#")]
-                    snippet = paragraphs[0][:260] + "..." if paragraphs else art.get("isi", "")[:260] + "..."
+                    paragraphs = [p for p in row["content"].split("\n") if p.strip() and not p.strip().startswith("#")]
+                    snippet = paragraphs[0][:260] + "..." if paragraphs else row["content"][:260] + "..."
                     st.write(snippet)
 
                     with st.expander("📖 Baca Artikel Selengkapnya"):
-                        if art.get("rujukan_urls"):
-                            st.info(f"📚 **Rujukan Sumber Informasi (Cek Fakta):**\n" + "\n".join([f"- {u}" for u in art.get("rujukan_urls", [])]))
-                        st.markdown(art.get("isi", ""))
+                        tambah_views_artikel(row["id"], 1)
+                        st.markdown(row["content"])
                         st.divider()
-                        st.caption(f"Diterbitkan di IDMedia Community · Penulis: {art.get('penulis')}")
+                        st.caption(f"Diterbitkan di IDMedia Community · Penulis: {row['author_name']}")
 
                 st.divider()
 
@@ -199,30 +233,38 @@ elif menu == "🔥 Ide Trending & Generator 100% Lolos":
             with col_t_img:
                 st.image(t_art["gambar"], use_container_width=True)
                 st.caption(t_art["caption_gambar"])
-                st.info(f"📊 **Potensi:** ~{t_art.get('views', 400)} Views | Est. Poin: {t_art.get('views', 400)//100} Poin")
+                if t_art.get("url_sumber"):
+                    st.caption(f"🔗 [Sumber Foto Asli]({t_art['url_sumber']})")
 
             with col_t_txt:
-                st.markdown(f"**🏷️ [{t_art['tema']}] · Kategori: {t_art['kategori']}**")
+                st.markdown(f"**[{t_art['tema']}]** · Target: 100% Lolos Kurasi Redaksi")
                 st.subheader(t_art["judul"])
-                st.markdown(f"💬 *Cuplikan (Excerpt):* **{t_art['cuplikan']}**")
+                st.markdown(f"*{t_art['cuplikan']}*")
+                st.write(f"✍️ **Penulis:** {t_art['penulis']} | 🏷️ **Kategori:** `{t_art['kategori']}`")
 
-                st.markdown("**📚 Rujukan Cek Fakta Asli:**")
-                for u in t_art["rujukan_urls"]:
-                    st.write(f"- [{u}]({u})")
-
-                with st.expander("📖 Baca Naskah Lengkap Siap Terbit (>500 Kata)"):
+                with st.expander("📋 Pratinjau Naskah Lengkap & 2 URL Rujukan Fakta"):
+                    st.info(
+                        "📚 **Rujukan Validitas (Cek Fakta):**\n"
+                        + "\n".join([f"- {url}" for url in t_art["rujukan_urls"]])
+                    )
                     st.markdown(t_art["isi"])
 
                 st.markdown("**Tindakan Cepat:**")
                 btn_c1, btn_c2, btn_c3 = st.columns(3)
                 with btn_c1:
-                    if st.button("🚀 Terbitkan Instan ke Beranda", key=f"pub_trend_{t_art['id']}"):
-                        # Cek apakah sudah ada di articles
-                        existing_ids = [a.get("id") for a in st.session_state.articles]
-                        if t_art["id"] not in existing_ids:
-                            new_list = [t_art] + st.session_state.articles
-                            update_and_persist(new_list)
-                        st.success(f"Naskah '{t_art['judul']}' berhasil diterbitkan resmi di Beranda!")
+                    if st.button("🚀 Simpan & Terbitkan ke Database", key=f"pub_trend_{t_art['id']}"):
+                        new_id = kirim_artikel(
+                            author_id=st.session_state.get("user_id", 2) or 2,
+                            author_name=st.session_state.get("full_name", t_art["penulis"]),
+                            title=t_art["judul"],
+                            content=t_art["isi"],
+                            excerpt=t_art["cuplikan"],
+                            category=t_art["kategori"],
+                            cover_url=t_art["gambar"],
+                            source_caption=t_art["caption_gambar"]
+                        )
+                        update_status_artikel(new_id, "published", "Naskah trending tervalidasi langsung terbit ke portal.")
+                        st.success(f"Naskah '{t_art['judul']}' berhasil disimpan permanen ke database & berstatus Terbit!")
                         st.rerun()
 
                 with btn_c2:
@@ -247,10 +289,13 @@ elif menu == "✍️ Tulis & Kirim Artikel":
     st.title("✍️ Formulir Penulisan Artikel Komunitas")
     st.write(
         "Kirim artikelmu dengan format listicle berstandar IDN Times. "
-        "Sistem dilengkapi validator otomatis judul EYD V, kuota subjudul, excerpt, dan rujukan cek fakta."
+        "Tulisan tersimpan permanen di basis data dan dilengkapi validator otomatis judul EYD V, subjudul, dan excerpt."
     )
 
-    penulis = st.text_input("Nama Lengkap Penulis (sesuai profil KTP)", placeholder="Contoh: Indri Kartika")
+    # Identitas Penulis Aktif
+    penulis_nama = st.session_state.get("full_name", "INDRI ANJAR KARTIKA Sari")
+    handle_info = st.session_state.get("idn_handle", "@ind-juv5brthzlf")
+    st.info(f"👤 **Identitas Penulis Terdaftar:** {penulis_nama} ({handle_info}) — *Akun IDN Terhubung*")
 
     col_k, col_t = st.columns([1, 1])
     with col_k:
@@ -299,196 +344,201 @@ elif menu == "✍️ Tulis & Kirim Artikel":
 
     col_cp1, col_cp2 = st.columns(2)
     with col_cp1:
-        tipe_caption = st.radio(
-            "Format Caption Gambar:",
-            ["Frasa Ilustrasi (Kecil tanpa titik)", "Kalimat Berita/Peristiwa (Kapital dengan titik)"],
-            horizontal=True
+        caption_gambar = st.text_input(
+            "Teks Caption & Sumber Gambar:",
+            value="ilustrasi orang bekerja di depan laptop (pexels.com/Burst)"
         )
-        default_caption = "ilustrasi orang bekerja di depan laptop (pexels.com/Burst)" if "Frasa" in tipe_caption else "Suasana diskusi redaksi di Jakarta, Senin (17/10/2026). (IDN Times/Indri)"
-        caption_gambar = st.text_input("Teks Caption & Sumber Gambar:", value=default_caption)
     with col_cp2:
         url_sumber_gambar = st.text_input("Alamat URL Sumber Asli Foto:", placeholder="https://www.pexels.com/photo/...")
-        deskripsi_gambar = st.text_input("Deskripsi / Kata Kunci Foto:", placeholder="tips menulis produktif")
 
     st.subheader("4. Isi Naskah Listicle (Pola: Subjudul ➜ Foto ➜ Narasi)")
-    st.caption("Pola baku: Paragraf pembuka (2-3 kalimat) ➜ `## 1. Subjudul` ➜ Narasi (min. 3 kalimat per paragraf) ➜ Paragraf penutup (Kesimpulan/Punchline/Pertanyaan).")
+    st.caption("Pola baku: Paragraf pembuka (2-3 kalimat) ➜ `## 1. Subjudul` ➜ Narasi (min. 3 kalimat per paragraf) ➜ Paragraf penutup.")
 
-    c_temp1, c_temp2 = st.columns(2)
-    with c_temp1:
-        if st.button("📋 Masukkan Templat Listicle Otomatis"):
-            st.session_state["draft_naskah"] = (
-                "Paragraf pembuka berisi latar belakang singkat, masalah yang dihadapi pembaca, "
-                "dan inti solusi yang ditawarkan (2-3 kalimat lugas dan menarik rasa penasaran).\n\n"
-                "## 1. Poin Subjudul Pertama\n"
-                "Tuliskan narasi penjelasan mendalam di sini. Hindari paragraf yang hanya berisi satu kalimat "
-                "agar pembaca mendapatkan informasi yang utuh dan bernilai tambah. Minimal dua paragraf "
-                "dengan masing-masing paragraf berisi tiga kalimat.\n\n"
-                "## 2. Poin Subjudul Kedua\n"
-                "Uraikan fakta pendukung, data, atau tips praktis yang relevan dengan topik yang sedang dibahas. "
-                "Gunakan gaya bahasa santai khas media anak muda namun tetap sesuai kaidah baku KBBI.\n\n"
-                "## 3. Poin Subjudul Ketiga\n"
-                "Lengkapi penjelasan langkah konkret atau contoh penerapan dalam kehidupan sehari-hari. "
-                "Pastikan tidak mengulang-ulang kalimat yang sama di setiap subjudul.\n\n"
-                "Paragraf penutup berisi kesimpulan singkat, punchline inspiratif, atau pertanyaan yang mengajak "
-                "pembaca berinteraksi di kolom komentar (1 paragraf, 2 kalimat)."
+    col_btn_tpl1, col_btn_tpl2 = st.columns([1, 1])
+    with col_btn_tpl1:
+        if st.button("📋 Masukkan Template Kerangka 5 Poin Siap Tulis"):
+            st.session_state.draft_content = (
+                "Tuliskan 2-3 kalimat paragraf pengantar di sini untuk memikat minat baca audiens pada 5 detik pertama. "
+                "Jelaskan latar belakang masalah dan mengapa topik ini sangat penting dibahas hari ini. "
+                "Berikut lima ulasan penting yang patut kamu ketahui.\n\n"
+                "## 1. Subjudul Poin Pertama\n"
+                "Tuliskan narasi penjelasan poin pertama di sini. Pastikan terdiri dari minimal 3 kalimat berbobot. "
+                "Sertakan data pendukung atau contoh kasus nyata agar pembaca mendapatkan wawasan baru. "
+                "Hindari pengulangan kata yang tidak perlu agar alur tulisan tetap mengalir lancar.\n\n"
+                "## 2. Subjudul Poin Kedua\n"
+                "Jelaskan poin kedua secara mendalam di sini. Hubungkan dengan fakta ilmiah atau rujukan terpercaya. "
+                "Berikan tips aplikatif yang dapat langsung dipraktikkan oleh pembaca dalam keseharian mereka. "
+                "Susun kalimat secara aktif agar lebih lugas dan bertenaga.\n\n"
+                "## 3. Subjudul Poin Ketiga\n"
+                "Ulas aspek ketiga dengan sudut pandang yang unik dan belum banyak diulas oleh media lain. "
+                "Gunakan perumpamaan atau ilustrasi sederhana untuk memudahkan pemahaman konsep yang rumit. "
+                "Jaga ritme membaca dengan membatasi panjang kalimat maksimal 20 kata per baris.\n\n"
+                "## 4. Subjudul Poin Keempat\n"
+                "Paparkan solusi atau pembelajaran penting dari poin keempat. "
+                "Tunjukkan dampak positif jika pembaca menerapkan kiat yang kamu sampaikan. "
+                "Perhatikan kaidah tanda baca koma sebelum kata hubung sesuai standar EYD V.\n\n"
+                "## 5. Subjudul Poin Kelima\n"
+                "Lengkapi dengan poin kelima sebagai penutup rangkaian listicle yang utuh dan komprehensif. "
+                "Berikan argumen pamungkas yang menyatukan seluruh benang merah pembahasan dari poin pertama hingga kelima. "
+                "Tutup dengan kalimat refleksi yang menggugah emosi positif pembaca.\n\n"
+                "Dari kelima poin di atas, langkah mana yang paling ingin segera kamu terapkan dalam kehidupan sehari-hari?"
             )
-    with c_temp2:
-        teknik_pilih = st.selectbox("Contoh Gaya Paragraf Penutup:", list(TEKNIK_PENUTUP.keys()))
-        st.caption(TEKNIK_PENUTUP[teknik_pilih])
+            st.rerun()
 
-    isi_default = st.session_state.get("draft_naskah", "")
-    isi = st.text_area("Tulis Naskah Lengkap di Sini:", value=isi_default, height=380)
-
-    words_count = len(re.findall(r"\b[\w'-]+\b", isi)) if isi else 0
-    h2_matches = re.findall(r"^##\s+.+", isi, re.MULTILINE) if isi else []
-    h2_count = len(h2_matches)
-
-    st.subheader("🔍 Pengecekan Kepatuhan Redaksi Real-time")
-    v1, v2, v3, v4 = st.columns(4)
-    with v1:
-        if words_count >= 500:
-            st.success(f"✅ **Kata:** {words_count} (>= 500)")
-        else:
-            st.warning(f"⚠️ **Kata:** {words_count} (Kurang {500 - words_count})")
-    with v2:
-        if h2_count >= min_subjudul:
-            st.success(f"✅ **Subjudul:** {h2_count} (Target >={min_subjudul})")
-        else:
-            st.warning(f"⚠️ **Subjudul:** {h2_count} (Min. {min_subjudul})")
-    with v3:
-        if cuplikan and len(cuplikan.split()) >= 6:
-            st.success("✅ **Excerpt:** Siap")
-        else:
-            st.warning("⚠️ **Excerpt:** Belum diisi")
-    with v4:
-        if ref_url1 or ref_url2:
-            st.success("✅ **Rujukan:** Ada")
-        else:
-            st.info("ℹ️ **Rujukan:** Disarankan min. 2")
-
-    persetujuan = st.checkbox(
-        "Saya menjamin naskah ini orisinal karya pribadi, bebas plagiarisme, gambar beresolusi baik tanpa watermark, "
-        "tidak mengandung unsur SARA/fitnah, dan belum pernah diterbitkan di media massa lain."
+    isi = st.text_area(
+        "Isi Lengkap Artikel:",
+        value=st.session_state.get("draft_content", ""),
+        height=380,
+        placeholder="Mulai ketik draf artikelmu di sini..."
     )
 
-    if st.button("🚀 Kirim Naskah ke Antrean Moderasi", type="primary"):
-        if not penulis or not judul or not isi or not cuplikan:
-            st.error("Lengkapi nama penulis, judul artikel, cuplikan, dan isi naskah sebelum mengirim.")
-        elif not persetujuan:
-            st.error("Centang pernyataan etika orisinalitas sebelum melakukan submit.")
+    # Audit Real-Time Kuantitatif & Standar Redaksi
+    word_count = len(re.findall(r"\b[\w'-]+\b", isi))
+    h2_matches = re.findall(r"^##\s+.+", isi, re.MULTILINE)
+    h2_count = len(h2_matches)
+
+    st.markdown("---")
+    st.subheader("📊 Indikator Kepatuhan Redaksi Real-time")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Jumlah Kata (Min. 500)", f"{word_count} kata", delta=f"{word_count - 500}" if word_count >= 500 else f"{word_count - 500}")
+    c2.metric(f"Subjudul H2 (Min. {min_subjudul})", f"{h2_count} subjudul", delta=f"{h2_count - min_subjudul}" if h2_count >= min_subjudul else f"{h2_count - min_subjudul}")
+    c3.metric("Status Judul EYD V", "Lolos ✅" if is_eyd_ok and judul else "Periksa ⚠️")
+    c4.metric("Penyimpanan", "SQLite Permanen 💾")
+
+    # Tombol Pengiriman Naskah ke Meja Redaksi
+    if st.button("🚀 Kirim Naskah ke Antrean Redaksi & Simpan", type="primary", use_container_width=True):
+        errors = []
+        if not judul:
+            errors.append("Judul artikel wajib diisi.")
+        if not is_eyd_ok:
+            errors.append("Format judul belum sesuai kaidah kapitalisasi EYD V.")
+        if word_count < 500:
+            errors.append(f"Jumlah kata baru {word_count}. Syarat minimal redaksi adalah 500 kata.")
+        if h2_count < min_subjudul:
+            errors.append(f"Jumlah subjudul H2 baru {h2_count}. Minimal {min_subjudul} subjudul diperlukan.")
+        if not isi:
+            errors.append("Isi artikel masih kosong.")
+
+        if errors:
+            st.error("❌ Naskah belum memenuhi standar kurasi:")
+            for err in errors:
+                st.write(f"- {err}")
         else:
-            ref_list = [u.strip() for u in [ref_url1, ref_url2] if u.strip()]
-            new_id = f"art-{int(datetime.now().timestamp())}"
-            new_article = {
-                "id": new_id,
-                "penulis": penulis.strip(),
-                "kategori": kategori,
-                "tipe": tipe_listicle,
-                "judul": judul.strip(),
-                "cuplikan": cuplikan.strip(),
-                "gambar": gambar_url.strip(),
-                "caption_gambar": caption_gambar.strip(),
-                "sumber_gambar": caption_gambar.strip(),
-                "url_sumber": url_sumber_gambar.strip(),
-                "deskripsi_gambar": deskripsi_gambar.strip(),
-                "rujukan_urls": ref_list,
-                "isi": isi.strip(),
-                "tanggal": datetime.now().strftime("%d %b %Y"),
-                "status": "Menunggu Ditinjau",
-                "catatan": "",
-                "views": 0,
-            }
-            updated = [new_article] + st.session_state.articles
-            update_and_persist(updated)
-            st.success("🎉 Naskah berhasil dikirim ke antrean moderasi! Pantau statusnya di menu 'Dashboard Penulis'.")
+            new_id = kirim_artikel(
+                author_id=st.session_state.get("user_id", 2) or 2,
+                author_name=penulis_nama,
+                title=judul,
+                content=isi,
+                excerpt=cuplikan or isi[:150] + "...",
+                category=kategori,
+                cover_url=gambar_url,
+                source_caption=caption_gambar,
+            )
+            st.success(f"🎉 Selamat! Naskah '{judul}' berhasil dikirim dan tersimpan permanen di database (ID: #{new_id})!")
+            st.info("Status naskah saat ini: ⏳ **Menunggu Ditinjau oleh Editor**.")
+            st.balloons()
 
 # ==============================================================================
-# 3. DASHBOARD PENULIS
+# 4. DASHBOARD PENULIS (STATUS, POIN, & KARTU IDN RESMI)
 # ==============================================================================
 elif menu == "📊 Dashboard Penulis":
-    st.title("📊 Dasbor Status Naskah Penulis")
+    st.title("📊 Status & Dashboard Tulisan Penulis")
     st.write("Pantau progres kurasi artikel, catatan perbaikan dari editor, dan kirim ulang naskah hasil revisi.")
 
-    nama_penulis = st.text_input("Ketik Nama Penulis Anda:", placeholder="Contoh: Indri Kartika")
+    # Profil Resmi Penulis Terhubung
+    col_card, col_stat = st.columns([1, 2])
+    with col_card:
+        IDN_CARD = Path(__file__).parent / "assets" / "idn_user_card.png"
+        if IDN_CARD.exists():
+            st.image(str(IDN_CARD), caption="Identitas Resmi Penulis IDN Media", use_container_width=True)
 
-    if nama_penulis:
-        tulisan_saya = [a for a in st.session_state.articles if a.get("penulis", "").strip().lower() == nama_penulis.strip().lower()]
+    with col_stat:
+        st.markdown(
+            f"""
+            ### 🪪 {st.session_state.get('full_name', 'INDRI ANJAR KARTIKA Sari')}
+            - **Handle IDN**: `{st.session_state.get('idn_handle', '@ind-juv5brthzlf')}`
+            - **Email Terdaftar**: `{st.session_state.get('email', '25067020011@student.upnjatim.ac.id')}`
+            - **Status Koneksi**: 🟢 **TERHUBUNG RESMI (Cognito Client ID: 2lnitap1rj2b3mb00iifvnj3ni)**
+            - **Device ID**: `01a149ab-1869-7792-9d3a-d18f1ddf5200`
+            - **Jenjang Reputasi**: 🏅 **Verified Writer & Senior Editor**
+            """
+        )
 
-        total = len(tulisan_saya)
-        terbit = sum(1 for a in tulisan_saya if a.get("status") == "Diterbitkan")
-        pending = sum(1 for a in tulisan_saya if a.get("status") == "Menunggu Ditinjau")
-        revisi = sum(1 for a in tulisan_saya if a.get("status") == "Perlu Perbaikan")
-        tolak = sum(1 for a in tulisan_saya if a.get("status") == "Ditolak")
+    st.markdown("---")
 
-        m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Total Naskah", total)
-        m2.metric("✅ Diterbitkan", terbit)
-        m3.metric("⏳ Ditinjau", pending)
-        m4.metric("🔧 Minta Revisi", revisi)
-        m5.metric("❌ Ditolak", tolak)
+    # Ambil artikel penulis dari basis data permanen
+    uid = st.session_state.get("user_id", 2) or 2
+    df_mine = ambil_artikel_penulis(uid)
 
-        st.markdown("---")
+    total = len(df_mine)
+    terbit = len(df_mine[df_mine["status"] == "published"]) if not df_mine.empty else 0
+    pending = len(df_mine[df_mine["status"] == "pending"]) if not df_mine.empty else 0
+    revisi = len(df_mine[df_mine["status"] == "revision"]) if not df_mine.empty else 0
+    tolak = len(df_mine[df_mine["status"] == "rejected"]) if not df_mine.empty else 0
 
-        if not tulisan_saya:
-            st.info(f"Belum ditemukan naskah atas nama '{nama_penulis}'. Pastikan ejaan nama sama persis.")
-        else:
-            for i, art in enumerate(tulisan_saya):
-                status = art.get("status", "Menunggu Ditinjau")
-                badge_color = {
-                    "Diterbitkan": "🟢",
-                    "Menunggu Ditinjau": "🟡",
-                    "Perlu Perbaikan": "🟠",
-                    "Ditolak": "🔴",
-                }.get(status, "⚪")
+    m1, m2, m3, m4, m5 = st.columns(5)
+    m1.metric("Total Naskah", total)
+    m2.metric("✅ Diterbitkan", terbit)
+    m3.metric("⏳ Ditinjau", pending)
+    m4.metric("🔧 Minta Revisi", revisi)
+    m5.metric("❌ Ditolak", tolak)
 
-                with st.expander(f"{badge_color} [{status.upper()}] — {art.get('judul')} ({art.get('tanggal')})"):
-                    st.write(f"**Kategori:** {art.get('kategori')} | **ID Naskah:** `{art.get('id')}`")
-                    if art.get("cuplikan"):
-                        st.caption(f"Cuplikan: {art.get('cuplikan')}")
-                    if art.get("catatan"):
-                        st.warning(f"📝 **Catatan Editor:** {art.get('catatan')}")
+    st.markdown("---")
 
-                    if status == "Perlu Perbaikan":
-                        st.info("💡 Editor meminta perbaikan. Silakan sesuaikan naskah di bawah ini lalu kirim ulang:")
-                        with st.form(key=f"edit_form_{art.get('id')}"):
-                            edit_judul = st.text_input("Revisi Judul", value=art.get("judul"))
-                            edit_cuplikan = st.text_input("Revisi Cuplikan", value=art.get("cuplikan", ""))
-                            edit_isi = st.text_area("Revisi Isi Naskah", value=art.get("isi"), height=250)
-                            submit_revisi = st.form_submit_button("Kirim Ulang Hasil Revisi")
-                            if submit_revisi:
-                                for item in st.session_state.articles:
-                                    if item.get("id") == art.get("id"):
-                                        item["judul"] = edit_judul
-                                        item["cuplikan"] = edit_cuplikan
-                                        item["isi"] = edit_isi
-                                        item["status"] = "Menunggu Ditinjau"
-                                        item["catatan"] = "Revisi telah diperbaiki dan dikirimkan ulang oleh penulis."
-                                update_and_persist(st.session_state.articles)
-                                st.success("Naskah revisi berhasil dikirim ulang ke editor!")
-                                st.rerun()
+    if df_mine.empty:
+        st.info("Belum ada tulisan yang dikirimkan. Mulai buat karya pertamamu di menu **✍️ Tulis & Kirim Artikel**!")
+    else:
+        for idx, art in df_mine.iterrows():
+            status = art["status"]
+            badge_map = {
+                "published": ("🟢", "SUDAH TERBIT", "badge-terbit"),
+                "pending": ("🟡", "MENUNGGU DITINJAU", "badge-tinjau"),
+                "revision": ("🔵", "PERLU PERBAIKAN", "badge-revisi"),
+                "rejected": ("🔴", "DITOLAK", "badge-tolak"),
+            }
+            icon, label, css_cls = badge_map.get(status, ("⚪", status.upper(), ""))
 
-                    st.markdown("**Pratinjau Isi:**")
-                    st.markdown(art.get("isi")[:300] + "...")
+            with st.expander(f"{icon} [{label}] — {art['title']} ({art['created_at'][:10]})"):
+                st.write(f"**Kategori:** {art['category']} | **ID Naskah:** `#{art['id']}` | **Views:** {art['views']:,} Pembaca")
+                if art["note"]:
+                    st.warning(f"📝 **Catatan Editor:** {art['note']}")
 
-                    st.markdown("---")
-                    st.markdown("##### 🚀 Integrasi & Dispatch ke Portal IDN Times Community")
-                    col_l1, col_l2 = st.columns([1, 1])
-                    with col_l1:
-                        st.link_button("🌐 Buka Editor IDN Times Community ↗", "https://community.idntimes.com/create-post", type="primary")
-                    with col_l2:
-                        export_text = format_idn_times_payload(art)
-                        st.download_button(
-                            label="📥 Unduh Naskah Siap Terbit (.txt)",
-                            data=export_text,
-                            file_name=f"IDN_Times_{art.get('id')}.txt",
-                            mime="text/plain",
-                            key=f"dl_txt_{art.get('id')}"
-                        )
-                    with st.expander("📋 Salin Naskah Format Lengkap (Siap Paste ke IDN Times)"):
-                        st.code(export_text, language="markdown")
+                if status == "revision":
+                    st.info("💡 Editor meminta perbaikan. Silakan sesuaikan naskah di bawah ini lalu kirim ulang:")
+                    full_art = ambil_semua_artikel().loc[ambil_semua_artikel()["id"] == art["id"]].iloc[0]
+                    with st.form(key=f"edit_form_{art['id']}"):
+                        edit_judul = st.text_input("Revisi Judul", value=full_art["title"])
+                        edit_isi = st.text_area("Revisi Isi Naskah", value=full_art["content"], height=250)
+                        submit_revisi = st.form_submit_button("Kirim Ulang Hasil Revisi")
+                        if submit_revisi:
+                            update_isi_artikel(art["id"], edit_judul, edit_isi)
+                            update_status_artikel(art["id"], "pending", "Naskah telah direvisi oleh penulis.")
+                            st.success("Naskah revisi berhasil dikirim ulang ke editor!")
+                            st.rerun()
+
+                st.markdown("---")
+                st.markdown("##### 🚀 Integrasi & Dispatch ke Portal IDN Times Community")
+                col_l1, col_l2 = st.columns([1, 1])
+                with col_l1:
+                    st.link_button("🌐 Buka Editor IDN Times Community ↗", "https://community.idntimes.com/create-post", type="primary")
+                with col_l2:
+                    export_text = format_idn_times_payload({
+                        "id": art["id"],
+                        "judul": art["title"],
+                        "isi": "",
+                        "penulis": st.session_state.get("full_name", "INDRI ANJAR KARTIKA Sari"),
+                        "kategori": art["category"],
+                    })
+                    st.download_button(
+                        label="📥 Download Paket Naskah (.txt)",
+                        data=export_text,
+                        file_name=f"IDN_Times_Post_{art['id']}.txt",
+                        mime="text/plain",
+                        key=f"dl_dash_{art['id']}"
+                    )
 
 # ==============================================================================
-# 4. PANEL MODERASI EDITOR
+# 5. PANEL MODERASI EDITOR
 # ==============================================================================
 elif menu in ["Panel Moderasi Editor", "⚖️ Panel Moderasi Editor", "🔐 Panel Moderasi Editor"]:
     st.title("⚖️ Panel Moderasi & Kurasi Redaksi")
@@ -496,187 +546,139 @@ elif menu in ["Panel Moderasi Editor", "⚖️ Panel Moderasi Editor", "🔐 Pan
 
     filter_status = st.selectbox(
         "Filter Status Antrean",
-        ["Semua", "Menunggu Ditinjau", "Perlu Perbaikan", "Diterbitkan", "Ditolak"],
+        ["pending", "published", "revision", "rejected", "Semua"],
+        format_func=lambda x: {
+            "pending": "⏳ Menunggu Ditinjau (Pending)",
+            "published": "✅ Sudah Diterbitkan (Published)",
+            "revision": "🔧 Perlu Perbaikan (Revision)",
+            "rejected": "❌ Ditolak (Rejected)",
+            "Semua": "Semua Naskah"
+        }.get(x, x)
     )
 
-    all_arts = st.session_state.articles
-    if filter_status != "Semua":
-        display_arts = [a for a in all_arts if a.get("status") == filter_status]
+    if filter_status == "Semua":
+        df_mod = ambil_semua_artikel()
     else:
-        display_arts = all_arts
+        df_mod = ambil_semua_artikel(filter_status)
 
-    st.write(f"Menampilkan **{len(display_arts)}** artikel dalam antrean.")
+    st.write(f"Menampilkan **{len(df_mod)}** artikel dalam antrean.")
     st.markdown("---")
 
-    for idx, art in enumerate(display_arts):
-        with st.container():
-            art_id = art.get("id")
-            st.subheader(f"{art.get('judul')} — [{art.get('status')}]")
-            st.write(f"✍️ **Penulis:** {art.get('penulis')} | 📂 **Kategori:** {art.get('kategori')} | 📅 **Tanggal:** {art.get('tanggal')}")
+    if df_mod.empty:
+        st.info("Tidak ada artikel yang sesuai dengan filter antrean saat ini.")
+    else:
+        for idx, art in df_mod.iterrows():
+            with st.container():
+                art_id = art["id"]
+                st.subheader(f"#{art_id}. {art['title']} — [{art['status'].upper()}]")
+                st.write(f"✍️ **Penulis:** {art['author_name']} | 📂 **Kategori:** {art['category']} | 📅 **Tanggal:** {art['created_at'][:10]}")
 
-            word_count = len(re.findall(r"\b[\w'-]+\b", art.get("isi", "")))
-            h2_count = len(re.findall(r"^##\s+.+", art.get("isi", ""), re.MULTILINE))
-            st.caption(f"Statistik: {word_count} kata | {h2_count} subjudul H2")
+                word_count = len(re.findall(r"\b[\w'-]+\b", art["content"] or ""))
+                h2_count = len(re.findall(r"^##\s+.+", art["content"] or "", re.MULTILINE))
+                st.caption(f"Statistik Naskah: {word_count} kata | {h2_count} subjudul H2")
 
-            with st.expander("📖 Tinjau Naskah, Gambar, & Sumber Rujukan"):
-                if art.get("cuplikan"):
-                    st.markdown(f"**Cuplikan (Excerpt):** *{art.get('cuplikan')}*")
-                if art.get("rujukan_urls"):
-                    st.markdown("**URL Rujukan Cek Fakta:**")
-                    for u in art.get("rujukan_urls"):
-                        st.write(f"- [{u}]({u})")
-                if art.get("gambar"):
-                    st.image(art.get("gambar"), width=420)
-                    caption_str = art.get('caption_gambar') or art.get('sumber_gambar') or 'Tanpa caption'
-                    st.caption(f"Caption: {caption_str}")
-                    if art.get("url_sumber"):
-                        st.caption(f"URL Sumber Foto: {art.get('url_sumber')}")
-                st.markdown(art.get("isi"))
+                with st.expander("📖 Tinjau Naskah & Gambar Sampul"):
+                    if art["excerpt"]:
+                        st.markdown(f"**Cuplikan (Excerpt):** *{art['excerpt']}*")
+                    if art["cover_url"]:
+                        st.image(art["cover_url"], width=420)
+                        st.caption(f"Caption: {art['source_caption'] or 'Tanpa caption'}")
+                    st.markdown(art["content"])
 
-            st.markdown("**Keputusan Editorial:**")
-            c_act1, c_act2, c_act3 = st.columns(3)
+                st.markdown("**Keputusan Editorial Redaksi:**")
+                c_act1, c_act2, c_act3 = st.columns(3)
 
-            with c_act1:
-                if st.button(f"✅ Terbitkan (Tayang)", key=f"pub_{art_id}"):
-                    for a in st.session_state.articles:
-                        if a.get("id") == art_id:
-                            a["status"] = "Diterbitkan"
-                            a["catatan"] = "Lolos kurasi redaksi dan telah diterbitkan resmi."
-                    update_and_persist(st.session_state.articles)
-                    st.success(f"Artikel '{art.get('judul')}' berhasil diterbitkan!")
-                    st.rerun()
+                with c_act1:
+                    catatan_pub = st.text_input("Pesan rilis:", key=f"pub_txt_{art_id}", placeholder="Lolos kurasi 100%...")
+                    if st.button(f"✅ Terbitkan Resmi", key=f"pub_btn_{art_id}"):
+                        update_status_artikel(art_id, "published", catatan_pub or "Lolos kurasi redaksi dan telah diterbitkan resmi.")
+                        st.success(f"Artikel #{art_id} berhasil diterbitkan ke Beranda!")
+                        st.rerun()
 
-            with c_act2:
-                catatan_revisi = st.text_input("Catatan revisi:", key=f"rev_txt_{art_id}", placeholder="Misal: Tambah subjudul / perbaiki caption gambar...")
-                if st.button(f"🔧 Minta Revisi", key=f"rev_btn_{art_id}"):
-                    for a in st.session_state.articles:
-                        if a.get("id") == art_id:
-                            a["status"] = "Perlu Perbaikan"
-                            a["catatan"] = catatan_revisi or "Mohon sesuaikan dengan kaidah teknis redaksi."
-                    update_and_persist(st.session_state.articles)
-                    st.warning("Status diubah menjadi Perlu Perbaikan.")
-                    st.rerun()
+                with c_act2:
+                    catatan_revisi = st.text_input("Catatan perbaikan:", key=f"rev_txt_{art_id}", placeholder="Misal: Tambah subjudul / perbaiki caption...")
+                    if st.button(f"🔧 Minta Revisi", key=f"rev_btn_{art_id}"):
+                        update_status_artikel(art_id, "revision", catatan_revisi or "Mohon sesuaikan dengan kaidah teknis redaksi.")
+                        st.warning(f"Status artikel #{art_id} diubah menjadi Perlu Perbaikan.")
+                        st.rerun()
 
-            with c_act3:
-                alasan_tolak = st.text_input("Alasan penolakan:", key=f"rej_txt_{art_id}", placeholder="Misal: Kurang 500 kata / terindikasi plagiasi...")
-                if st.button(f"❌ Tolak Naskah", key=f"rej_btn_{art_id}"):
-                    for a in st.session_state.articles:
-                        if a.get("id") == art_id:
-                            a["status"] = "Ditolak"
-                            a["catatan"] = alasan_tolak or "Naskah tidak memenuhi syarat penerbitan redaksi."
-                    update_and_persist(st.session_state.articles)
-                    st.error("Naskah ditolak.")
-                    st.rerun()
+                with c_act3:
+                    alasan_tolak = st.text_input("Alasan penolakan:", key=f"rej_txt_{art_id}", placeholder="Kurang 500 kata / terindikasi plagiasi...")
+                    if st.button(f"❌ Tolak Naskah", key=f"rej_btn_{art_id}"):
+                        update_status_artikel(art_id, "rejected", alasan_tolak or "Naskah tidak memenuhi syarat penerbitan redaksi.")
+                        st.error(f"Artikel #{art_id} ditolak.")
+                        st.rerun()
 
-            if art.get("status") == "Diterbitkan":
-                st.markdown("##### 🚀 Integrasi & Dispatch ke Portal IDN Times Community:")
-                c_dsp1, c_dsp2 = st.columns([1, 1])
-                with c_dsp1:
-                    st.link_button("🌐 Buka Form Tulis Berita IDN Times ↗", "https://community.idntimes.com/create-post")
-                with c_dsp2:
-                    exp_payload = format_idn_times_payload(art)
-                    st.download_button(
-                        label="📥 Download Paket Naskah Siap Terbit (.txt)",
-                        data=exp_payload,
-                        file_name=f"IDN_Times_Ready_{art_id}.txt",
-                        mime="text/plain",
-                        key=f"dl_pub_{art_id}"
-                    )
-
-            st.divider()
+                st.divider()
 
 # ==============================================================================
-# 5. 10 PEDOMAN EMAS REDAKSI
+# 6. 10 PEDOMAN EMAS REDAKSI
 # ==============================================================================
 elif menu == "📖 10 Pedoman Emas Redaksi":
-    st.title("📖 10 Pedoman Emas Penulisan IDN Times Community")
-    st.write("Terapkan 10 aturan emas ini agar naskahmu langsung lolos kurasi editor tanpa revisi (Zero Reject).")
+    st.title("📖 10 Pedoman Emas Redaksi IDN Times Community")
+    st.write(
+        "Kompilasi aturan mutlak dari meja redaksi IDN Times. Terapkan secara disiplin "
+        "agar seluruh naskah tulisanmu lolos kurasi 100% tanpa catatan revisi."
+    )
 
-    p1, p2, p3, p4, p5 = st.tabs([
-        "1–2. Judul & Cuplikan",
-        "3–4. Listicle & Pola",
-        "5–6. Gambar & Sumber Rujukan",
-        "7–8. Paragraf & Kedalaman",
-        "9–10. Self-Audit & Submit",
-    ])
+    t1, t2 = st.tabs(["📌 Kaidah Teknis & Format Tulisan", "🖼️ SOP Visual & Etika Redaksi"])
 
-    with p1:
+    with t1:
         st.markdown(
             """
-            ### 1. Judul Menarik & Sesuai Kaidah EYD V
-            * **Lugas & Jelas**: Tidak bertele-tele, langsung sampaikan inti pesan tulisan.
-            * **Gunakan Angka**: Pasang angka numerik untuk artikel listicle (contoh: *5 Fakta Unik...*, *7 Cara Jitu...*).
-            * **Aturan Huruf Kapital**: Setiap huruf pertama di awal kata wajib kapital, **KECUALI** partikel kecil di tengah:
-              * *atau, dan, dengan, ke, per, oleh, ala, buat, tetapi, setelah, tapi, untuk, bagi, dari, di, kepada, pun, sebelum, tentang, yang, daripada, karena, pada, sampai, tanpa, agar*.
-            * *Contoh Benar:* `"5 Tips Mengatur Keuangan untuk Gen Z agar Cepat Mandiri"`
+            ### 1. Judul Menarik & Patuh EYD V
+            * Wajib huruf kapital di awal setiap kata, **kecuali kata partikel/kata tugas di tengah kalimat** (*dan, di, ke, dari, untuk, bagi, yang, agar*).
+            * Sisipkan angka numerik di awal judul listicle (*Contoh: 5 Tips Mengatur Keuangan...*) untuk menaikkan rasio klik (CTR).
+            * Panjang judul ideal: **4 hingga 12 kata**. Hindari clickbait palsu yang mengecewakan pembaca.
 
             ---
-            ### 2. Cuplikan (Excerpt) Menarik
-            * Terletak tepat di bawah judul berupa **satu kalimat** inti pesan tulisan.
-            * Berfungsi sebagai *hook* dan caption ketika dibagikan ke media sosial.
-            * Boleh dibuat sedikit nyeleneh dan santai asalkan tetap relevan dengan konteks tulisan.
+            ### 2. Cuplikan (Excerpt) Pemikat
+            * Tulis 1–2 kalimat pengantar yang padat, membangkitkan rasa penasaran, dan memantik empati pembaca.
+            * Excerpt berfungsi sebagai teks pratayang di media sosial (Instagram/Twitter/Facebook) dan cuplikan SEO Google.
+
+            ---
+            ### 3. Kuota Subjudul Listicle
+            * **Artikel Deskriptif / Tips / Opini**: Wajib minimal **3 subjudul (H2)**.
+            * **Artikel Kompilasi / Galeri Foto**: Wajib minimal **7 subjudul (H2)**.
+            * Penulisan subjudul wajib menggunakan angka urut: `## 1. Judul Poin`, `## 2. Judul Poin`.
+
+            ---
+            ### 4. Kepadatan Paragraf & Kata
+            * Setiap subjudul wajib memiliki minimal **2 paragraf**.
+            * Setiap paragraf wajib memuat minimal **3 kalimat utuh** yang logis dan runtut.
+            * Total naskah wajib mencapai **minimal 500 kata** (tidak termasuk judul dan caption gambar).
+
+            ---
+            ### 5. Paragraf Penutup Variatif
+            * Hindari penutup klise seperti *"Nah, itu tadi..."* atau *"Sekian artikel kali ini..."*.
+            * Gunakan teknik penutup: *Kesimpulan Solutif, Punchline Menggugah, Pertanyaan Interaktif, Call-to-Action,* atau *Refleksi Diri*.
             """
         )
 
-    with p2:
+    with t2:
         st.markdown(
             """
-            ### 3. Bentuk Artikel Listicle & Kuota Subjudul
-            * **Artikel Deskriptif / Tips / Opini / Zodiak / Kuliner**: Minimal **3 subjudul**.
-            * **Kompilasi Foto / Galeri**: Minimal **7 subjudul** relevan dengan narasi informatif.
-            * Setiap subjudul wajib memiliki nomor angka numerik.
+            ### 6. Standar Gambar & Resolusi (Landscape 3:2)
+            * Format rasio gambar sampul (cover) wajib **landscape 3:2** dengan resolusi minimal **800x350 piksel**.
+            * Ukuran file gambar maksimal **1 MB** agar loading artikel cepat dan ramah kuota seluler.
+            * Diutamakan menampilkan foto dengan objek manusia hidup untuk meningkatkan keterikatan emosional pembaca.
 
             ---
-            ### 4. Pola Listicle Baku IDN Times
-            Pola urutan yang benar di setiap subjudul:
-            1. **Subjudul (H2)**
-            2. **Foto / Gambar Pendukung**
-            3. **Narasi Penjelas**
-            """
-        )
-
-    with p3:
-        st.markdown(
-            """
-            ### 5. Ketentuan Gambar & Atribusi Lengkap
-            * **Ukuran & Rasio**: Maksimal 1 MB, rasio **3:2** (landscape, min. 800x350 px), tanpa watermark.
-            * **Objek Hidup**: Gambarkan aktivitas manusia (mengetik laptop, menyiram tanaman, menyesap kopi).
-            * **Format Caption**:
-              * *Frasa:* Huruf kecil tanpa titik ➜ `ilustrasi orang bekerja (pexels.com/Burst)`
-              * *Kalimat Peristiwa:* Huruf kapital dengan titik ➜ `Penulis menghadiri workshop di Jakarta, Senin (17/10/2026). (IDN Times/Indri)`
+            ### 7. Larangan Watermark & Gambar Pecah
+            * Dilarang keras menggunakan gambar buram, pecah (pixelated), atau memuat **watermark merek/logo lain**.
+            * Dilarang melakukan tangkapan layar (screenshot) tanpa izin dari sumber hak cipta asli.
 
             ---
-            ### 6. Wajib Cantumkan URL Rujukan Asli (Cek Fakta)
-            * Wajib minimal **2 tautan rujukan kredibel** di awal tulisan untuk kategori sains, kesehatan, bisnis, entertainment, dll.
-            * Rujukan harus dari sumber asli (jurnal, buku, situs resmi institusi).
-            * Dilarang menggunakan Wikipedia, Kaskus, blog pribadi orang, atau media lokal kompetitor.
-            * Penyebutan dalam teks dicetak miring, contoh: *dilansir Live Science*, *dilansir Mashable*.
-            """
-        )
-
-    with p4:
-        st.markdown(
-            """
-            ### 7. Paragraf Pembuka & Penutup
-            * **Pembuka**: 1–2 paragraf dengan 2–3 kalimat saja. Buat pembaca penasaran!
-            * **Penutup**: Cukup 1 paragraf dengan 2 kalimat melalui 3 opsi pilihan:
-              * *Kesimpulan:* Merangkum solusi dari poin yang telah dibahas.
-              * *Punchline:* Kalimat bijak atau inspirasi penutup yang menyentuh.
-              * *Pertanyaan:* Mengajak pembaca berdiskusi di kolom komentar.
+            ### 8. Penulisan Caption Sesuai SOP Redaksi
+            * **Tipe Frasa Ilustrasi**: Ditulis huruf kecil tanpa titik.  
+              *Contoh:* `ilustrasi orang begadang menatap layar ponsel (pexels.com/Burst)`
+            * **Tipe Kalimat Berita**: Diawali huruf kapital dan diakhiri tanda titik.  
+              *Contoh:* `Suasana konferensi pers peluncuran produk di Jakarta, Senin (17/10/2026). (IDN Times/Indri)`
 
             ---
-            ### 8. Informasi Mendalam (Anti-Satu Kalimat)
-            * Setiap paragraf narasi wajib berisi **minimal 3 kalimat**.
-            * Berikan penjelasan mendalam agar pembaca merasakan nilai tambah dari karyamu.
-            """
-        )
-
-    with p5:
-        st.markdown(
-            """
-            ### 9. Cek Typo (Saltik) & Ejaan Sebelum Kirim
-            * Baca ulang naskah secara perlahan sebelum submit.
-            * Pastikan tidak ada kata yang terlewat, huruf tertukar, atau salah penempatan tanda baca.
+            ### 9. Minimal 2 Sumber Rujukan Cek Fakta
+            * Wajib menyertakan minimal 2 tautan (URL) rujukan kredibel untuk artikel sains, kesehatan, dan gaya hidup.
+            * Sumber rujukan harus berasal dari jurnal ilmiah, institusi resmi, atau kantor berita internasional utama.
 
             ---
             ### 10. Submit Percaya Diri ke Tim Editor
@@ -686,13 +688,13 @@ elif menu == "📖 10 Pedoman Emas Redaksi":
         )
 
 # ==============================================================================
-# 6. ENSIKLOPEDIA 20 PANDUAN RESMI & KALKULATOR POIN
+# 7. ENSIKLOPEDIA 20 PANDUAN RESMI & MASTERBOOK 12 HALAMAN
 # ==============================================================================
 elif menu == "📚 Ensiklopedia 20 Panduan IDN":
     st.title("📚 Ensiklopedia 20 Panduan Resmi IDN Times Community")
     st.write(
-        "Hasil ekstraksi (reverse engineering) seluruh basis pengetahuan editorial resmi IDN Times: "
-        "hierarki penulis, skema monetisasi poin, dan 20 artikel panduan kurasi redaksi."
+        "Hasil ekstraksi komprehensif seluruh basis pengetahuan editorial resmi IDN Times: "
+        "Masterbook 12 Halaman, 20 modul kurasi, jenjang karir penulis, skema poin, dan tutorial redeem resmi."
     )
 
     t_book, t_mod, t_poin, t_tier, t_lic = st.tabs([

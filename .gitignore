@@ -7,3 +7,8 @@ __pycache__/
 
 # Local backup archives
 backups/
+
+# Cloned reference repos
+chrome-devtools-mcp/
+idn-area/
+idn-media-qa-automation/

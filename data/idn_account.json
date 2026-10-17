@@ -1,0 +1,55 @@
+{
+  "status": "TERHUBUNG_RESMI",
+  "biodata_maksimal": {
+    "nama_lengkap": "INDRI ANJAR KARTIKA Sari",
+    "nama_depan": "INDRI ANJAR KARTIKA",
+    "nama_belakang": "Sari",
+    "idn_username": "ind-juv5brthzlf",
+    "idn_handle": "@ind-juv5brthzlf",
+    "email_institusi": "25067020011@student.upnjatim.ac.id",
+    "nim_mahasiswa": "25067020011",
+    "universitas": "Universitas Pembangunan Nasional 'Veteran' Jawa Timur (UPN Veteran Jatim)",
+    "nama_tampilan_socmed": "25067020011 INDRI ANJAR KARTIKA SARI",
+    "avatar_cdn": "https://cdn.idn.media/idnaccount/avatar/500/e9cc06d280125b80bad2d1512a760229.webp?v=1790583944",
+    "kartu_qr_idn": "assets/idn_user_card.png",
+    "profil_url": "https://community.idntimes.com/@ind-juv5brthzlf",
+    "tier_reputasi": "Verified Writer & Senior Editor IDMedia",
+    "peran": "admin",
+    "bio_profesional": "Penulis profesional dan kontributor aktif IDN Times Community berfokus pada topik Science & Tech, Career, Health, dan Lifestyle berstandar kurasi Zero Reject 100%."
+  },
+  "auth_keamanan": {
+    "penyedia": "Google OAuth2",
+    "google_user_id": "113447326802138361307",
+    "email_verified": true,
+    "aws_cognito": {
+      "region": "ap-southeast-1",
+      "user_pool_id": "ap-southeast-1_sztKfI6YS",
+      "client_id": "2lnitap1rj2b3mb00iifvnj3ni",
+      "sub": "194aa53c-b001-702a-936b-6d4f6884360e",
+      "uuid_internal": "96c9a784-c2a5-4bc8-97c3-ac0a04dc5fa3",
+      "scope": "aws.cognito.signin.user.admin phone openid profile email",
+      "auth_time": 1792216962,
+      "exp": 1792303362
+    }
+  },
+  "pelacakan_sesi": {
+    "device_id": "01a149ab-1869-7792-9d3a-d18f1ddf5200",
+    "distinct_id": "user_1792237312261_vycrhs1x43",
+    "session_id": "01a149d8-684d-7db3-9773-6b0c0a80e446",
+    "meta_fbp_cookie": "fb.1.1792237313454.569425137464595898",
+    "user_state": "identified",
+    "platform": "IDN App / IDN Times Web",
+    "referrer": "https://www.idntimes.com/",
+    "ads_endpoint": "https://ads.idn.media/"
+  },
+  "rute_editor_komunitas": {
+    "url_create_post": "https://community.idntimes.com/create-post",
+    "url_publish": "https://community.idntimes.com/dashboard/article/publish",
+    "url_pending": "https://community.idntimes.com/dashboard/article/pending",
+    "url_draft": "https://community.idntimes.com/dashboard/article/draft",
+    "url_revision": "https://community.idntimes.com/dashboard/article/revision",
+    "url_rejected": "https://community.idntimes.com/dashboard/article/rejected",
+    "url_redeem": "https://community.idntimes.com/dashboard/redeem-history"
+  },
+  "connected_at": "2026-10-17 19:42:00"
+}

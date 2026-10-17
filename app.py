@@ -14,6 +14,7 @@ from src.idn_knowledge_base import (
     PANDUAN_20_MODUL,
     hitung_estimasi_poin,
     format_idn_times_payload,
+    TRENDING_GAP_ARTICLES,
 )
 
 # ==============================================================================
@@ -92,6 +93,7 @@ with st.sidebar:
         "Menu Utama",
         [
             "📰 Beranda Publik",
+            "🔥 Ide Trending & Generator 100% Lolos",
             "✍️ Tulis & Kirim Artikel",
             "📊 Dashboard Penulis",
             "⚖️ Panel Moderasi Editor",
@@ -170,7 +172,75 @@ if menu == "📰 Beranda Publik":
                 st.divider()
 
 # ==============================================================================
-# 2. TULIS & KIRIM ARTIKEL
+# 2. IDE TRENDING & GENERATOR NASKAH 100% LOLOS
+# ==============================================================================
+elif menu == "🔥 Ide Trending & Generator 100% Lolos":
+    st.title("🔥 Bank Ide Trending & Generator Naskah 100% Layak Terbit")
+    st.write(
+        "Koleksi topik hangat hasil *Content Gap Analysis* yang dirancang khusus memenuhi seluruh kaidah kurasi IDN Times Community: "
+        "format listicle terstruktur, judul EYD V, excerpt pemikat, SOP gambar beresolusi tinggi, dan 2 URL rujukan cek fakta."
+    )
+
+    t_filter = st.selectbox(
+        "Pilih Niche / Tema Trending:",
+        ["Semua Tema", "Health & Lifestyle", "Career & Finansial", "Relationship & Cinta", "Teknologi & Gadget"]
+    )
+
+    display_trends = TRENDING_GAP_ARTICLES
+    if t_filter != "Semua Tema":
+        display_trends = [t for t in TRENDING_GAP_ARTICLES if t.get("tema") == t_filter]
+
+    st.markdown("---")
+
+    for idx, t_art in enumerate(display_trends):
+        with st.container():
+            col_t_img, col_t_txt = st.columns([1, 2])
+            with col_t_img:
+                st.image(t_art["gambar"], use_container_width=True)
+                st.caption(t_art["caption_gambar"])
+                st.info(f"📊 **Potensi:** ~{t_art.get('views', 400)} Views | Est. Poin: {t_art.get('views', 400)//100} Poin")
+
+            with col_t_txt:
+                st.markdown(f"**🏷️ [{t_art['tema']}] · Kategori: {t_art['kategori']}**")
+                st.subheader(t_art["judul"])
+                st.markdown(f"💬 *Cuplikan (Excerpt):* **{t_art['cuplikan']}**")
+
+                st.markdown("**📚 Rujukan Cek Fakta Asli:**")
+                for u in t_art["rujukan_urls"]:
+                    st.write(f"- [{u}]({u})")
+
+                with st.expander("📖 Baca Naskah Lengkap Siap Terbit (>500 Kata)"):
+                    st.markdown(t_art["isi"])
+
+                st.markdown("**Tindakan Cepat:**")
+                btn_c1, btn_c2, btn_c3 = st.columns(3)
+                with btn_c1:
+                    if st.button("🚀 Terbitkan Instan ke Beranda", key=f"pub_trend_{t_art['id']}"):
+                        # Cek apakah sudah ada di articles
+                        existing_ids = [a.get("id") for a in st.session_state.articles]
+                        if t_art["id"] not in existing_ids:
+                            new_list = [t_art] + st.session_state.articles
+                            update_and_persist(new_list)
+                        st.success(f"Naskah '{t_art['judul']}' berhasil diterbitkan resmi di Beranda!")
+                        st.rerun()
+
+                with btn_c2:
+                    export_trend = format_idn_times_payload(t_art)
+                    st.download_button(
+                        "📥 Download Paket Naskah (.txt)",
+                        data=export_trend,
+                        file_name=f"IDN_Times_{t_art['id']}.txt",
+                        mime="text/plain",
+                        key=f"dl_tr_{t_art['id']}"
+                    )
+
+                with btn_c3:
+                    st.link_button("🌐 Buka Form IDN Times ↗", "https://community.idntimes.com/create-post")
+
+            st.divider()
+
+# ==============================================================================
+# 3. TULIS & KIRIM ARTIKEL
 # ==============================================================================
 elif menu == "✍️ Tulis & Kirim Artikel":
     st.title("✍️ Formulir Penulisan Artikel Komunitas")

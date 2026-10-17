@@ -13,6 +13,7 @@ from src.idn_knowledge_base import (
     SKEMA_POIN_MONETISASI,
     PANDUAN_20_MODUL,
     hitung_estimasi_poin,
+    format_idn_times_payload,
 )
 
 # ==============================================================================
@@ -398,6 +399,23 @@ elif menu == "📊 Dashboard Penulis":
                     st.markdown("**Pratinjau Isi:**")
                     st.markdown(art.get("isi")[:300] + "...")
 
+                    st.markdown("---")
+                    st.markdown("##### 🚀 Integrasi & Dispatch ke Portal IDN Times Community")
+                    col_l1, col_l2 = st.columns([1, 1])
+                    with col_l1:
+                        st.link_button("🌐 Buka Editor IDN Times Community ↗", "https://community.idntimes.com/create-post", type="primary")
+                    with col_l2:
+                        export_text = format_idn_times_payload(art)
+                        st.download_button(
+                            label="📥 Unduh Naskah Siap Terbit (.txt)",
+                            data=export_text,
+                            file_name=f"IDN_Times_{art.get('id')}.txt",
+                            mime="text/plain",
+                            key=f"dl_txt_{art.get('id')}"
+                        )
+                    with st.expander("📋 Salin Naskah Format Lengkap (Siap Paste ke IDN Times)"):
+                        st.code(export_text, language="markdown")
+
 # ==============================================================================
 # 4. PANEL MODERASI EDITOR
 # ==============================================================================
@@ -478,6 +496,21 @@ elif menu in ["Panel Moderasi Editor", "⚖️ Panel Moderasi Editor", "🔐 Pan
                     update_and_persist(st.session_state.articles)
                     st.error("Naskah ditolak.")
                     st.rerun()
+
+            if art.get("status") == "Diterbitkan":
+                st.markdown("##### 🚀 Integrasi & Dispatch ke Portal IDN Times Community:")
+                c_dsp1, c_dsp2 = st.columns([1, 1])
+                with c_dsp1:
+                    st.link_button("🌐 Buka Form Tulis Berita IDN Times ↗", "https://community.idntimes.com/create-post")
+                with c_dsp2:
+                    exp_payload = format_idn_times_payload(art)
+                    st.download_button(
+                        label="📥 Download Paket Naskah Siap Terbit (.txt)",
+                        data=exp_payload,
+                        file_name=f"IDN_Times_Ready_{art_id}.txt",
+                        mime="text/plain",
+                        key=f"dl_pub_{art_id}"
+                    )
 
             st.divider()
 

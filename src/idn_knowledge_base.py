@@ -169,3 +169,36 @@ def hitung_estimasi_poin(views: int):
     poin = views // 100
     rupiah = poin * 100
     return poin, rupiah
+
+def format_idn_times_payload(art: dict) -> str:
+    """Format draf artikel agar siap di-copy paste langsung ke dashboard IDN Times Community."""
+    rujukan_txt = ""
+    if art.get("rujukan_urls"):
+        rujukan_txt = "Sumber rujukan:\n" + "\n".join(art["rujukan_urls"]) + "\n\n"
+
+    caption = art.get("caption_gambar") or art.get("sumber_gambar") or "ilustrasi artikel (pexels.com)"
+    cover_info = (
+        f"URL Gambar: {art.get('gambar', '-')}\n"
+        f"Caption & Sumber: {caption}\n"
+        f"Tautan Asli: {art.get('url_sumber', '-')}\n"
+        f"Deskripsi Foto: {art.get('deskripsi_gambar', '-')}\n"
+    )
+
+    full_payload = (
+        f"==========================================================\n"
+        f"DRAF SIAP TERBIT — IDN TIMES COMMUNITY FORMAT\n"
+        f"==========================================================\n\n"
+        f"JUDUL ARTIKEL (EYD V):\n{art.get('judul', '')}\n\n"
+        f"CUPLIKAN / EXCERPT:\n{art.get('cuplikan', '')}\n\n"
+        f"KATEGORI:\n{art.get('kategori', 'Life')}\n\n"
+        f"GAMBAR SAMPUL (COVER):\n{cover_info}\n"
+        f"----------------------------------------------------------\n"
+        f"NASKAH LENGKAP LISTICLE:\n\n"
+        f"{rujukan_txt}"
+        f"{art.get('isi', '')}\n\n"
+        f"----------------------------------------------------------\n"
+        f"Status Kurasi Internal: {art.get('status', 'Diterbitkan')}\n"
+        f"IDMedia UID: {art.get('id', '')}\n"
+    )
+    return full_payload
+

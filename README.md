@@ -53,8 +53,8 @@
 * Akses catatan revisi dari tim editor.
 * Formulir *Edit & Submit Ulang* langsung dari dasbor jika artikel berstatus *Perlu Perbaikan*.
 
-### 4. 🔐 Panel Moderasi Editor (Kata Sandi: `editor123`)
-* Meja redaksi untuk meninjau draf yang masuk.
+### 4. ⚖️ Panel Moderasi Editor
+* Meja redaksi untuk meninjau draf yang masuk secara langsung tanpa hambatan.
 * Aksi editorial cepat:
   * ✅ **Terbitkan (Tayang)**: Menampilkan artikel ke halaman utama publik.
   * 🔧 **Minta Revisi**: Mengembalikan naskah dengan instruksi perbaikan spesifik.

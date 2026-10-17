@@ -93,7 +93,7 @@ with st.sidebar:
             "📰 Beranda Publik",
             "✍️ Tulis & Kirim Artikel",
             "📊 Dashboard Penulis",
-            "🔐 Panel Moderasi Editor",
+            "⚖️ Panel Moderasi Editor",
             "📖 10 Pedoman Emas Redaksi",
             "📚 Ensiklopedia 20 Panduan IDN",
         ],
@@ -401,94 +401,85 @@ elif menu == "📊 Dashboard Penulis":
 # ==============================================================================
 # 4. PANEL MODERASI EDITOR
 # ==============================================================================
-elif menu == "🔐 Panel Moderasi Editor":
-    st.title("🔐 Panel Moderasi & Kurasi Redaksi")
-    st.caption("Akses editor untuk memeriksa kepatuhan 10 pedoman emas naskah dan gambar sebelum diterbitkan.")
+elif menu in ["Panel Moderasi Editor", "⚖️ Panel Moderasi Editor", "🔐 Panel Moderasi Editor"]:
+    st.title("⚖️ Panel Moderasi & Kurasi Redaksi")
+    st.caption("Akses tim editor untuk memeriksa kepatuhan 10 pedoman emas naskah dan gambar sebelum diterbitkan.")
 
-    password = st.text_input("Masukkan Kata Sandi Editor:", type="password")
+    filter_status = st.selectbox(
+        "Filter Status Antrean",
+        ["Semua", "Menunggu Ditinjau", "Perlu Perbaikan", "Diterbitkan", "Ditolak"],
+    )
 
-    if password == "editor123":
-        st.success("Otorisasi Editor Berhasil.")
-
-        filter_status = st.selectbox(
-            "Filter Status Antrean",
-            ["Semua", "Menunggu Ditinjau", "Perlu Perbaikan", "Diterbitkan", "Ditolak"],
-        )
-
-        all_arts = st.session_state.articles
-        if filter_status != "Semua":
-            display_arts = [a for a in all_arts if a.get("status") == filter_status]
-        else:
-            display_arts = all_arts
-
-        st.write(f"Menampilkan **{len(display_arts)}** artikel dalam antrean.")
-        st.markdown("---")
-
-        for idx, art in enumerate(display_arts):
-            with st.container():
-                art_id = art.get("id")
-                st.subheader(f"{art.get('judul')} — [{art.get('status')}]")
-                st.write(f"✍️ **Penulis:** {art.get('penulis')} | 📂 **Kategori:** {art.get('kategori')} | 📅 **Tanggal:** {art.get('tanggal')}")
-
-                word_count = len(re.findall(r"\b[\w'-]+\b", art.get("isi", "")))
-                h2_count = len(re.findall(r"^##\s+.+", art.get("isi", ""), re.MULTILINE))
-                st.caption(f"Statistik: {word_count} kata | {h2_count} subjudul H2")
-
-                with st.expander("📖 Tinjau Naskah, Gambar, & Sumber Rujukan"):
-                    if art.get("cuplikan"):
-                        st.markdown(f"**Cuplikan (Excerpt):** *{art.get('cuplikan')}*")
-                    if art.get("rujukan_urls"):
-                        st.markdown("**URL Rujukan Cek Fakta:**")
-                        for u in art.get("rujukan_urls"):
-                            st.write(f"- [{u}]({u})")
-                    if art.get("gambar"):
-                        st.image(art.get("gambar"), width=420)
-                        st.caption(f"Caption: {art.get('caption_gambar') or art.get('sumber_gambar')}")
-                        if art.get("url_sumber"):
-                            st.caption(f"URL Sumber Foto: {art.get('url_sumber')}")
-                    st.markdown(art.get("isi"))
-
-                st.markdown("**Keputusan Editorial:**")
-                c_act1, c_act2, c_act3 = st.columns(3)
-
-                with c_act1:
-                    if st.button(f"✅ Terbitkan (Tayang)", key=f"pub_{art_id}"):
-                        for a in st.session_state.articles:
-                            if a.get("id") == art_id:
-                                a["status"] = "Diterbitkan"
-                                a["catatan"] = "Lolos kurasi redaksi dan telah diterbitkan resmi."
-                        update_and_persist(st.session_state.articles)
-                        st.success(f"Artikel '{art.get('judul')}' berhasil diterbitkan!")
-                        st.rerun()
-
-                with c_act2:
-                    catatan_revisi = st.text_input("Catatan revisi:", key=f"rev_txt_{art_id}", placeholder="Misal: Tambah subjudul / perbaiki caption gambar...")
-                    if st.button(f"🔧 Minta Revisi", key=f"rev_btn_{art_id}"):
-                        for a in st.session_state.articles:
-                            if a.get("id") == art_id:
-                                a["status"] = "Perlu Perbaikan"
-                                a["catatan"] = catatan_revisi or "Mohon sesuaikan dengan kaidah teknis redaksi."
-                        update_and_persist(st.session_state.articles)
-                        st.warning("Status diubah menjadi Perlu Perbaikan.")
-                        st.rerun()
-
-                with c_act3:
-                    alasan_tolak = st.text_input("Alasan penolakan:", key=f"rej_txt_{art_id}", placeholder="Misal: Kurang 500 kata / terindikasi plagiasi...")
-                    if st.button(f"❌ Tolak Naskah", key=f"rej_btn_{art_id}"):
-                        for a in st.session_state.articles:
-                            if a.get("id") == art_id:
-                                a["status"] = "Ditolak"
-                                a["catatan"] = alasan_tolak or "Naskah tidak memenuhi syarat penerbitan redaksi."
-                        update_and_persist(st.session_state.articles)
-                        st.error("Naskah ditolak.")
-                        st.rerun()
-
-                st.divider()
-
-    elif password:
-        st.error("Kata sandi editor salah. Silakan coba lagi.")
+    all_arts = st.session_state.articles
+    if filter_status != "Semua":
+        display_arts = [a for a in all_arts if a.get("status") == filter_status]
     else:
-        st.info("Masukkan kata sandi editor untuk mengakses panel moderasi.")
+        display_arts = all_arts
+
+    st.write(f"Menampilkan **{len(display_arts)}** artikel dalam antrean.")
+    st.markdown("---")
+
+    for idx, art in enumerate(display_arts):
+        with st.container():
+            art_id = art.get("id")
+            st.subheader(f"{art.get('judul')} — [{art.get('status')}]")
+            st.write(f"✍️ **Penulis:** {art.get('penulis')} | 📂 **Kategori:** {art.get('kategori')} | 📅 **Tanggal:** {art.get('tanggal')}")
+
+            word_count = len(re.findall(r"\b[\w'-]+\b", art.get("isi", "")))
+            h2_count = len(re.findall(r"^##\s+.+", art.get("isi", ""), re.MULTILINE))
+            st.caption(f"Statistik: {word_count} kata | {h2_count} subjudul H2")
+
+            with st.expander("📖 Tinjau Naskah, Gambar, & Sumber Rujukan"):
+                if art.get("cuplikan"):
+                    st.markdown(f"**Cuplikan (Excerpt):** *{art.get('cuplikan')}*")
+                if art.get("rujukan_urls"):
+                    st.markdown("**URL Rujukan Cek Fakta:**")
+                    for u in art.get("rujukan_urls"):
+                        st.write(f"- [{u}]({u})")
+                if art.get("gambar"):
+                    st.image(art.get("gambar"), width=420)
+                    caption_str = art.get('caption_gambar') or art.get('sumber_gambar') or 'Tanpa caption'
+                    st.caption(f"Caption: {caption_str}")
+                    if art.get("url_sumber"):
+                        st.caption(f"URL Sumber Foto: {art.get('url_sumber')}")
+                st.markdown(art.get("isi"))
+
+            st.markdown("**Keputusan Editorial:**")
+            c_act1, c_act2, c_act3 = st.columns(3)
+
+            with c_act1:
+                if st.button(f"✅ Terbitkan (Tayang)", key=f"pub_{art_id}"):
+                    for a in st.session_state.articles:
+                        if a.get("id") == art_id:
+                            a["status"] = "Diterbitkan"
+                            a["catatan"] = "Lolos kurasi redaksi dan telah diterbitkan resmi."
+                    update_and_persist(st.session_state.articles)
+                    st.success(f"Artikel '{art.get('judul')}' berhasil diterbitkan!")
+                    st.rerun()
+
+            with c_act2:
+                catatan_revisi = st.text_input("Catatan revisi:", key=f"rev_txt_{art_id}", placeholder="Misal: Tambah subjudul / perbaiki caption gambar...")
+                if st.button(f"🔧 Minta Revisi", key=f"rev_btn_{art_id}"):
+                    for a in st.session_state.articles:
+                        if a.get("id") == art_id:
+                            a["status"] = "Perlu Perbaikan"
+                            a["catatan"] = catatan_revisi or "Mohon sesuaikan dengan kaidah teknis redaksi."
+                    update_and_persist(st.session_state.articles)
+                    st.warning("Status diubah menjadi Perlu Perbaikan.")
+                    st.rerun()
+
+            with c_act3:
+                alasan_tolak = st.text_input("Alasan penolakan:", key=f"rej_txt_{art_id}", placeholder="Misal: Kurang 500 kata / terindikasi plagiasi...")
+                if st.button(f"❌ Tolak Naskah", key=f"rej_btn_{art_id}"):
+                    for a in st.session_state.articles:
+                        if a.get("id") == art_id:
+                            a["status"] = "Ditolak"
+                            a["catatan"] = alasan_tolak or "Naskah tidak memenuhi syarat penerbitan redaksi."
+                    update_and_persist(st.session_state.articles)
+                    st.error("Naskah ditolak.")
+                    st.rerun()
+
+            st.divider()
 
 # ==============================================================================
 # 5. 10 PEDOMAN EMAS REDAKSI

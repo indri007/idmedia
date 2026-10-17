@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://idmedia-indonesia.streamlit.app/"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Streamlit App" /></a>
   <img src="https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue?logo=python" alt="Python Version" />
-  <img src="https://img.shields.io/badge/Tests-12%20Passed-success?logo=pytest" alt="Test Status" />
+  <img src="https://img.shields.io/badge/Tests-16%20Passed-success?logo=pytest" alt="Test Status" />
   <img src="https://img.shields.io/badge/Design-Material%203%20%2F%20Glassmorphism-purple" alt="Material 3" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
 </p>
@@ -40,7 +40,7 @@
 * Tampilan kartu artikel lengkap dengan foto sampul rasio 3:2, nama penulis, tanggal, waktu baca, ringkasan *hook*, dan daftar rujukan cek fakta.
 
 ### 2. ✍️ Smart Listicle Editor (Standar Zero Reject)
-* **Validator Judul EYD V Real-time**: Memeriksa huruf kapital pada awal kata dan memastikan huruf kecil untuk 25 partikel kata sambung (*di, ke, dari, untuk, agar, yang, atau, dan, dll.*).
+* **Validator Judul EYD V Real-time**: Memeriksa huruf kapital pada awal kata dan memastikan huruf kecil untuk 25 partikel kata sambung (*di, ke, dari, untuk, agar, yang, atau, dan, dll.*), mendukung angka awal listicle (e.g. *5 Tips Sukses*).
 * **Inspirasi Kata Penyedap**: Generator diksi klik-ramah (*Kerap, Bikin, Bakal, Wajib Tahu, Diam-diam, Konon, dll.*).
 * **Cuplikan (Excerpt)**: 1 kalimat *hook* inti pesan untuk caption media sosial.
 * **Cek Fakta Rujukan**: Input minimal 2 URL sumber rujukan kredibel asli di awal draf.
@@ -81,12 +81,38 @@ source .venv/bin/activate  # Untuk Windows: .venv\Scripts\activate
 # 3. Pasang paket dependensi
 pip install -r requirements.txt
 
-# 4. Jalankan uji unit
-python -m pytest -q
+# 4. Salin file environment (opsional untuk override secret)
+cp .env.example .env
 
-# 5. Jalankan aplikasi Streamlit
+# 5. Jalankan uji unit (16 tests passed)
+python -m pytest -q tests/
+
+# 6. Jalankan aplikasi Streamlit
 streamlit run app.py
 ```
+
+---
+
+## 🤖 QA Automation Suite (`idn-media-qa-automation`)
+
+Suite pengujian automasi Robot Framework untuk ekosistem IDN Media:
+
+```bash
+cd idn-media-qa-automation
+
+# 1. Pasang dependensi QA
+pip install -r requirements.txt
+
+# 2. Siapkan file environment kredensial pengujian
+cp .env.example .env
+# Isi IDN_TEST_EMAIL dan IDN_TEST_PASSWORD dengan akun test resmi
+
+# 3. Eksekusi pengujian Robot Framework
+robot -d results idntimes/artikel/artikel.robot
+```
+
+> [!IMPORTANT]
+> **Batasan Editorial:** Aksi `Save as draft` pada Robot Framework hanya memverifikasi penyimpanan draf di akun penulis. Di sistem produksi `community.idntimes.com`, publikasi ke indeks publik memerlukan proses kurasi editorial dan tidak dapat diterbitkan secara otomatis tanpa persetujuan redaksi IDN Media.
 
 ---
 
@@ -98,18 +124,24 @@ idmedia/
 │   ├── idmedia_logo_3d.jpg        # Logo 3D Material Design 3
 │   └── idmedia_hero_banner.jpg    # Banner 3D Newsroom & Journalism 4.0
 ├── data/
-│   └── articles.json              # Basis data artikel (persistent JSON)
+│   └── articles.json              # Fallback basis data artikel JSON
 ├── src/
 │   ├── idn_knowledge_base.py      # Mesin 20 panduan kurasi & kalkulator poin
 │   ├── document_parser.py         # Ekstraktor teks & dokumen
 │   ├── quality_rules.py           # Mesin audit naskah
 │   ├── visual_quality.py          # Mesin evaluasi kualitas gambar
 │   └── reporting.py               # Generator laporan Word & PDF
-├── tests/                         # Test suite otomatis (pytest)
+├── tests/
+│   ├── test_articles.py           # Uji unit konten & validasi artikel
+│   └── test_database_auth.py      # Uji unit SQLite, auth hashing & role
+├── idn-media-qa-automation/       # Robot Framework QA suite
+├── .env.example                   # Template konfigurasi environment aman
 ├── app.py                         # Aplikasi utama IDMedia Community
+├── database.py                    # SQLite database persistent storage
+├── auth.py                        # Secure PBKDF2 authentication module
 ├── index.html                     # Landing page GitHub Pages
 ├── requirements.txt               # Daftar paket dependensi Python
-└── README.md                      # Dokumentasi landing page repositori
+└── README.md                      # Dokumentasi resmi repositori
 ```
 
 ---

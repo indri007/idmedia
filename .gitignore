@@ -8,6 +8,14 @@ __pycache__/
 # Local backup archives
 backups/
 
+# Database and SQLite data files
+data/*.db
+*.db
+results/
+log.html
+report.html
+output.xml
+
 # Cloned reference repos
 chrome-devtools-mcp/
 idn-area/

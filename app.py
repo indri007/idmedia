@@ -96,15 +96,17 @@ def validate_eyd_title(title):
     for i, w in enumerate(words):
         clean_w = re.sub(r"[^\w]", "", w)
         lower_w = clean_w.lower()
+        if not clean_w:
+            continue
         if i == 0:
-            if w and not w[0].isupper():
-                issues.append(f"Kata pertama '{w}' wajib diawali huruf kapital.")
+            if not clean_w[0].isupper() and not clean_w[0].isdigit():
+                issues.append(f"Kata pertama '{w}' wajib diawali huruf kapital atau angka numerik listicle.")
         else:
             if lower_w in PARTIKEL_KECIL:
                 if w != lower_w:
                     issues.append(f"Partikel '{w}' di tengah judul sebaiknya ditulis huruf kecil ('{lower_w}').")
             else:
-                if w and not w[0].isupper():
+                if not clean_w[0].isupper() and not clean_w[0].isdigit():
                     issues.append(f"Kata '{w}' sebaiknya diawali huruf kapital.")
     return len(issues) == 0, issues
 

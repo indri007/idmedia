@@ -78,7 +78,12 @@ def validate_eyd_title(title):
 # ==============================================================================
 # SIDEBAR
 # ==============================================================================
+LOGO_PATH = Path(__file__).parent / "assets" / "idmedia_logo_3d.jpg"
+BANNER_PATH = Path(__file__).parent / "assets" / "idmedia_hero_banner.jpg"
+
 with st.sidebar:
+    if LOGO_PATH.exists():
+        st.image(str(LOGO_PATH), use_container_width=True)
     st.title("✍️ IDMedia Hub")
     st.caption("Platform Penulisan & Kurasi Komunitas Berstandar Redaksi Nasional")
     st.markdown("---")
@@ -109,6 +114,8 @@ with st.sidebar:
 # 1. BERANDA PUBLIK
 # ==============================================================================
 if menu == "📰 Beranda Publik":
+    if BANNER_PATH.exists():
+        st.image(str(BANNER_PATH), use_container_width=True)
     st.title("📰 Portal Berita & Artikel Komunitas")
     st.write(
         "Koleksi tulisan inspiratif, edukatif, dan menghibur dari para penulis komunitas "

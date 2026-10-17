@@ -42,6 +42,152 @@ SKEMA_POIN_MONETISASI = {
     "metode_redeem": ["Transfer Rekening Bank", "GoPay", "OVO", "DANA"]
 }
 
+MASTERBOOK_12_MODUL = [
+    {
+        "halaman": 1,
+        "modul": "Pengantar & Visi Kurasi 100%",
+        "ringkasan": "Buku panduan komprehensif 12 halaman: Monetisasi, Kurasi 100%, Strategi AI, & Teknik Jurnalisme Modern.",
+        "detail": "Dirancang khusus membimbing penulis pemula hingga profesional agar menguasai standar redaksi media siber nasional IDN Times Community.",
+        "poin_kunci": [
+            "Penyelarasan standar redaksi IDN Times pusat",
+            "Membangun portofolio kepenulisan kredibel",
+            "Skema monetisasi transparan dan legalitas hak cipta"
+        ]
+    },
+    {
+        "halaman": 2,
+        "modul": "Modul 1: Skema Finansial & Konversi Poin",
+        "ringkasan": "Memahami bagaimana angka pembaca (views) dikonversi menjadi rupiah melalui sistem poin platform.",
+        "detail": "1 Poin setiap 100 Views Organik. Poin tambahan diperoleh dari bonus event bulanan. Pencairan (Redeem) dapat ditarik ke rekening bank atau e-wallet (GoPay, OVO, DANA) setelah mencapai batas minimum 2.500 Poin (Rp250.000).",
+        "poin_kunci": [
+            "Rasio: 1 Poin per 100 Views Organik",
+            "Nilai: 1 Poin = Rp100",
+            "Target: Rp500.000+ dari views rutin & partisipasi event bulanan",
+            "Redeem fleksibel via Bank & E-Wallet"
+        ]
+    },
+    {
+        "halaman": 3,
+        "modul": "Modul 2: Tahapan Onboarding & Pengaturan Akun",
+        "ringkasan": "Langkah awal krusial untuk memastikan identitas dan profil Anda terverifikasi dengan benar oleh sistem.",
+        "detail": "Registrasi via community.idntimes.com dengan akun valid. Pengisian nama lengkap profil wajib sesuai nama KTP agar pencairan dana tidak terkendala anti-fraud. Sinkronisasi nomor rekening bank atau e-wallet terverifikasi atas nama pribadi.",
+        "poin_kunci": [
+            "Registrasi via Google/Facebook aktif",
+            "Nama profil wajib identik dengan KTP",
+            "Rekening bank & e-wallet wajib atas nama sendiri",
+            "Keamanan akun: Jangan pernah membagikan sandi atau OTP"
+        ]
+    },
+    {
+        "halaman": 4,
+        "modul": "Modul 3: Standar Teknis & Kuantitatif Artikel",
+        "ringkasan": "Redaksi media nasional menetapkan ambang batas ukuran artikel yang ketat guna menjaga kualitas pembacaan.",
+        "detail": "Minimal 500 kata untuk semua jenis tulisan. Minimal 3 subjudul (H2) untuk artikel deskriptif dan 7 subjudul untuk listicle kompilasi foto. Setiap subjudul wajib memiliki minimal 2 paragraf dengan masing-masing paragraf berisi minimal 3 kalimat.",
+        "poin_kunci": [
+            "Panjang Naskah: Minimal 500 kata",
+            "Subjudul (H2): Min. 3 (deskriptif) atau Min. 7 (listicle galeri)",
+            "Kepadatan Paragraf: Min. 2 paragraf per subjudul",
+            "Panjang Kalimat: Min. 3 kalimat per paragraf"
+        ]
+    },
+    {
+        "halaman": 5,
+        "modul": "Modul 4: Kaidah EYD V & Penulisan Judul Berita",
+        "ringkasan": "Judul adalah pintu gerbang pertama pembaca. Kesalahan penulisan kapitalisasi huruf sering menjadi alasan utama revisi.",
+        "detail": "Setiap awal kata pada judul wajib menggunakan huruf kapital, kecuali kata tugas (dan, atau, di, ke, dari, untuk, dengan, pada, dalam) di tengah. Gunakan angka di awal (5 Fakta Unik...) untuk mendongkrak CTR. Hindari bahasa kaku skripsi.",
+        "poin_kunci": [
+            "Kapitalisasi EYD V: Huruf besar tiap kata kecuali partikel di tengah",
+            "Angka numerik di awal judul listicle untuk menaikkan CTR",
+            "Gaya santai, padat, dan elegan khas anak muda",
+            "Contoh benar: '5 Tips Mengatur Keuangan untuk Gen Z agar Cepat Mandiri'"
+        ]
+    },
+    {
+        "halaman": 6,
+        "modul": "Modul 5: Prompt AI Parafrase Lolos Plagiasi",
+        "ringkasan": "Pemanfaatan kecerdasan buatan (AI) harus dilakukan secara etis untuk merombak sumber berita luar negeri.",
+        "detail": "Gunakan formula prompt redaksi resmi: 'Bertindaklah sebagai Senior Editor IDN Times. Parafrase ulang teks acuan di bawah ini dengan gaya bahasa jurnalistik dinamis dan santai khas media anak muda. 1. Rombak struktur kalimat aktif. 2. Terapkan KBBI dan EYD V. 3. Pertahankan fakta asli dengan angle segar. 4. Jangan gunakan frasa repetitif robot.'",
+        "poin_kunci": [
+            "Formula prompt resmi Senior Editor IDN Times",
+            "Tingkat keaslian (originality) terjaga di atas 90%",
+            "Bebas deteksi AI & mesin anti-plagiasi",
+            "Fakta terjaga dengan sudut pandang unik"
+        ]
+    },
+    {
+        "halaman": 7,
+        "modul": "Modul 6: Etika Penggunaan Gambar & Hak Cipta",
+        "ringkasan": "Kesalahan visual dapat berakibat fatal bagi legalitas publikasi media siber.",
+        "detail": "Rasio gambar sampul wajib 3:2 landscape, resolusi jernih dengan ukuran file ringan (< 1 MB). Letakkan gambar tepat di bawah subjudul (H2) sebelum narasi. Wajib mencantumkan atribusi sumber cetak miring (Pixabay/John Doe atau Dokumentasi Pribadi). Dilarang keras screenshot tanpa izin.",
+        "poin_kunci": [
+            "Rasio landscape 3:2 (min. 800x350 px)",
+            "Ukuran file kompresi ringan maksimal 1 MB",
+            "Penempatan tepat di bawah subjudul H2",
+            "Atribusi sumber jelas, tanpa watermark, bebas pelanggaran hak cipta"
+        ]
+    },
+    {
+        "halaman": 8,
+        "modul": "Modul 7: Pemilihan Topik Trending & Riset Keyword",
+        "ringkasan": "Artikel dengan views tinggi berasal dari topik yang sedang dicari banyak pembaca saat ini.",
+        "detail": "Pantau Google Trends Indonesia harian. Fokus pada niche populer (Relationship, Career, Tech, Travel, Kuliner, Entertainment). Temukan sudut pandang unik (angle) dan letakkan kata kunci utama di paruh awal judul artikel untuk optimasi SEO.",
+        "poin_kunci": [
+            "Riset Google Trends Indonesia secara berkala",
+            "Kategori favorit: Relationship, Career, Tech, Lifestyle, Pop Culture",
+            "Diferensiasi sudut pandang (unique angle)",
+            "Peletakan keyword utama di paruh depan judul (SEO-friendly)"
+        ]
+    },
+    {
+        "halaman": 9,
+        "modul": "Modul 9: Psikologi Pembaca & Teknik Hook Paragraf",
+        "ringkasan": "Membujuk pembaca agar tidak menutup halaman dalam 5 detik pertama kunjungan.",
+        "detail": "Gunakan paragraf pembuka (lead) berupa pertanyaan retoris, fakta mengejutkan, atau skenario relatable. Batasi maksimal 3-4 kalimat per paragraf agar nyaman dibaca di layar smartphone. Pecah data kompleks dengan bullet points agar mudah dipindai.",
+        "poin_kunci": [
+            "Lead memikat dalam 5 detik pertama",
+            "Paragraf pendek (maks. 3-4 kalimat per paragraf mobile-friendly)",
+            "Hindari wall of text (blok teks menjemukan)",
+            "Format scannable dengan penomoran jelas"
+        ]
+    },
+    {
+        "halaman": 10,
+        "modul": "Modul 10: Troubleshooting Penolakan & Revisi Editor",
+        "ringkasan": "Jika artikel Anda dikembalikan atau ditolak oleh editor, jangan berkecil hati. Lakukan solusi cepat.",
+        "detail": "Kurang dari 500 kata: Tambahkan analisis mendalam pada poin terakhir. Terindikasi plagiasi: Rombak struktur kalimat pasif menjadi aktif secara mandiri. Kesalahan EYD: Periksa tanda koma sebelum konjungsi dan kapitalisasi kata tugas.",
+        "poin_kunci": [
+            "Solusi kata kurang: Tambah elaborasi studi kasus di poin penutup",
+            "Solusi plagiasi: Parafrase aktif kalimat per kalimat",
+            "Solusi EYD: Cek partikel depan dan tanda baca baku",
+            "Respons revisi dalam kurun waktu cepat di dashboard penulis"
+        ]
+    },
+    {
+        "halaman": 11,
+        "modul": "Modul 11: Etika Jurnalistik Media Siber Nasional",
+        "ringkasan": "Sebagai penulis di platform media terkemuka, menjunjung tinggi kode etik adalah harga mati.",
+        "detail": "Wajib anti-hoaks dengan verifikasi minimal 2 sumber kredibel. Dilarang keras memuat konten SARA, ujaran kebencian, atau pencemaran nama baik. Sampaikan opini pribadi secara santun, objektif, dan tidak menggurui audiens.",
+        "poin_kunci": [
+            "Verifikasi ketat minimal 2 sumber referensi kredibel",
+            "Netralitas mutlak: Nol toleransi terhadap SARA & ujaran kebencian",
+            "Opini objektif tanpa nada menggurui",
+            "Menjunjung tinggi Pedoman Pemberitaan Media Siber (PPMS)"
+        ]
+    },
+    {
+        "halaman": 12,
+        "modul": "Modul 12: Menuju Verified Writer & Penutup",
+        "ringkasan": "Pencapaian tertinggi seorang kontributor di IDN Times Community adalah mendapatkan lencana Verified Writer.",
+        "detail": "Bangun konsistensi penerbitan rutin mingguan. Pertahankan rekam jejak Zero Reject Rate dengan mematuhi seluruh 12 modul panduan. Aktif di komunitas resmi penulis untuk mendapatkan penugasan khusus dan event berhadiah menarik.",
+        "poin_kunci": [
+            "Konsistensi rilis berkala membangun trust editor",
+            "Zero Reject Rate dengan checklist audit mandiri",
+            "Lencana biru Verified Writer & hak prioritas kurasi",
+            "Menulis adalah investasi konsistensi dan reputasi jangka panjang"
+        ]
+    }
+]
+
 PANDUAN_20_MODUL = [
     {
         "id": 1,
@@ -101,7 +247,7 @@ PANDUAN_20_MODUL = [
         "id": 10,
         "judul": "Cara Redeem IDN Points yang Praktis untuk Community Writers",
         "kategori": "Monetisasi",
-        "inti": "Kumpulkan poin dari akumulasi views organik dan event menulis. Tarik saldo langsung ke rekening atau e-wallet setelah mencapai batas minimum."
+        "inti": "Kumpulkan minimal 2.500 Poin (Rp250.000) dari views (1 poin/100 views) dan event bulanan. Tarik via Transfer Bank atau E-Wallet (GoPay, OVO, DANA). Pastikan nama akun sesuai rekening KTP. Pencairan diproses 7-14 hari kerja."
     },
     {
         "id": 11,

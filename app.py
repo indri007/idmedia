@@ -12,6 +12,7 @@ from src.idn_knowledge_base import (
     HIERARKI_PENULIS,
     SKEMA_POIN_MONETISASI,
     PANDUAN_20_MODUL,
+    MASTERBOOK_12_MODUL,
     hitung_estimasi_poin,
     format_idn_times_payload,
     TRENDING_GAP_ARTICLES,
@@ -694,12 +695,63 @@ elif menu == "📚 Ensiklopedia 20 Panduan IDN":
         "hierarki penulis, skema monetisasi poin, dan 20 artikel panduan kurasi redaksi."
     )
 
-    t_mod, t_poin, t_tier, t_lic = st.tabs([
+    t_book, t_mod, t_poin, t_tier, t_lic = st.tabs([
+        "📑 Masterbook 12 Halaman (Edisi Lengkap)",
         "📖 20 Modul Panduan Resmi",
         "💰 Kalkulator Poin & Monetisasi",
         "🎖️ Jenjang Karir Penulis (Tier)",
         "📜 Lisensi & Ketentuan Hukum",
     ])
+
+    with t_book:
+        st.subheader("📑 Masterbook Penulis Profesional IDN Times Community (12 Halaman Lengkap)")
+        st.caption("Panduan kurasi 100%, strategi AI etis, monetisasi poin, dan teknik jurnalisme modern media siber.")
+
+        pdf_path = Path(__file__).parent / "Masterbook_Penulis_Profesional_IDN_Times_Community_12_Halaman.pdf"
+        if pdf_path.exists():
+            with open(pdf_path, "rb") as f:
+                st.download_button(
+                    label="📥 Unduh PDF Masterbook Resmi (12 Halaman Lengkap)",
+                    data=f.read(),
+                    file_name="Masterbook_Penulis_Profesional_IDN_Times_Community_12_Halaman.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+
+        st.markdown("---")
+        cari_mb = st.text_input("🔍 Cari materi Masterbook (Modul / Topik):", placeholder="Misal: prompt AI, EYD V, 500 kata, cover 3:2, redeem...")
+
+        filtered_mb = MASTERBOOK_12_MODUL
+        if cari_mb:
+            filtered_mb = [
+                m for m in MASTERBOOK_12_MODUL
+                if cari_mb.lower() in m["modul"].lower()
+                or cari_mb.lower() in m["ringkasan"].lower()
+                or cari_mb.lower() in m["detail"].lower()
+                or any(cari_mb.lower() in p.lower() for p in m["poin_kunci"])
+            ]
+
+        for m in filtered_mb:
+            with st.expander(f"📄 [Halaman {m['halaman']}/12] {m['modul']}", expanded=(m['halaman'] <= 2)):
+                st.markdown(f"**Ringkasan:** {m['ringkasan']}")
+                st.write(m['detail'])
+
+                if m['halaman'] == 6:
+                    st.markdown("**📋 Salin Prompt AI Resmi Redaksi IDN Times:**")
+                    st.code(
+                        "Bertindaklah sebagai Senior Editor IDN Times. Parafrase ulang teks acuan di bawah ini "
+                        "dengan gaya bahasa jurnalistik dinamis dan santai khas media anak muda. "
+                        "Instruksi:\n"
+                        "1. Rombak total struktur kalimat per kalimat secara aktif (jangan terjemahan kaku).\n"
+                        "2. Terapkan tata bahasa baku KBBI dan EYD V.\n"
+                        "3. Pertahankan fakta/angka asli namun segarkan sudut pandang (angle) tulisan.\n"
+                        "4. Jangan gunakan frasa repetitif khas robot.",
+                        language="text"
+                    )
+
+                st.markdown("**📌 Poin Kunci & Parameter Wajib:**")
+                for pk in m["poin_kunci"]:
+                    st.markdown(f"- ✅ {pk}")
 
     with t_mod:
         st.subheader("Daftar 20 Artikel Panduan Resmi Terintegrasi")
@@ -738,6 +790,57 @@ elif menu == "📚 Ensiklopedia 20 Panduan IDN":
             st.success("🎉 Ambang batas minimal 2.500 poin telah tercapai! Saldo siap ditarik (redeem).")
         else:
             st.warning(f"Kurang {2500 - poin_est:,} poin lagi untuk mencapai ambang batas pencairan pertama.")
+
+        st.markdown("---")
+        st.subheader("📖 Panduan Lengkap: Cara Praktis Redeem IDN Points")
+        st.markdown("Ikuti tahapan resmi di bawah ini untuk mencairkan IDN Points ke rekening bank atau e-wallet tanpa kendala:")
+
+        r1, r2 = st.columns(2)
+        with r1:
+            with st.expander("1️⃣ Syarat Minimal & Validasi Akun", expanded=True):
+                st.markdown(
+                    """
+                    * **Ambang Batas**: Minimal akumulasi **2.500 IDN Points** (= Rp250.000).
+                    * **Sumber Poin**: Diperoleh dari views organik artikel yang terbit (1 Poin per 100 views) serta bonus kompetisi/campaign menulis.
+                    * **Kelengkapan Profil**: Nama di profil IDN Times Community wajib sama persis dengan nama di KTP dan buku rekening tujuan penarikan.
+                    """
+                )
+            with st.expander("2️⃣ Langkah Klaim di Dashboard IDN"):
+                st.markdown(
+                    """
+                    1. Masuk ke akun Anda di [community.idntimes.com](https://community.idntimes.com).
+                    2. Klik ikon profil di pojok kanan atas, lalu pilih menu **IDN Points**.
+                    3. Klik tombol merah bertuliskan **Redeem Points**.
+                    4. Masukkan jumlah poin yang ingin dicairkan (kelipatan 2.500 poin).
+                    """
+                )
+
+        with r2:
+            with st.expander("3️⃣ Pilihan Jalur Pencairan Dana", expanded=True):
+                st.markdown(
+                    """
+                    * **Transfer Rekening Bank**: Mendukung BCA, Mandiri, BNI, BRI, BSI, CIMB Niaga, Permata, dll.
+                    * **E-Wallet**: Mendukung GoPay, OVO, dan DANA.
+                    * *Catatan*: Akun e-wallet harus sudah berstatus terverifikasi (*Plus/Premier*) dengan nomor telepon aktif.
+                    """
+                )
+            with st.expander("4️⃣ Jadwal & Estimasi Waktu (SLA Keuangan)"):
+                st.markdown(
+                    """
+                    * **Waktu Proses**: Rata-rata **7 hingga 14 hari kerja** (Senin - Jumat, di luar hari libur nasional).
+                    * **Pelacakan Status**: Pantau status penarikan di tab *History Redeem* (*Pending* ➔ *Processing* ➔ *Completed*).
+                    * **Notifikasi**: Bukti transfer akan dikirimkan otomatis ke alamat email yang terdaftar.
+                    """
+                )
+
+        with st.expander("💡 3 Kiat Penting Agar Pengajuan Redeem Langsung Disetujui (Anti-Gagal)"):
+            st.markdown(
+                """
+                1. **Kesesuaian Identitas Mutlak**: Jangan pernah menggunakan rekening bank atau nomor e-wallet atas nama orang lain. Nama pemilik rekening harus cocok 100% dengan identitas akun untuk lolos verifikasi anti-fraud tim Finance IDN Media.
+                2. **Periksa Limit Masuk E-Wallet**: Jika memilih opsi e-wallet (GoPay/OVO/DANA), pastikan limit transaksi bulanan belum melampaui batas maksimum agar proses transfer dana tidak tertolak oleh sistem penyedia dompet digital.
+                3. **Kualitas & Keaslian Traffic**: Poin yang terkumpul wajib berasal dari pembaca nyata. Sistem analitik redaksi IDN Media melakukan audit sebelum persetujuan transfer untuk memastikan bebas dari manipulasi bot atau spam views.
+                """
+            )
 
     with t_tier:
         st.subheader("Tingkatan & Lencana Penulis IDN Times")

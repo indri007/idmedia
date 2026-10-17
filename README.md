@@ -17,5 +17,6 @@ python -m pip install -r requirements.txt
 python -m pytest -q
 python -m streamlit run app.py
 ```
+idmedia ∙ main ∙ app.py
 
 Temuan bersifat indikatif dan tidak menjamin validitas ilmiah atau penerimaan jurnal.

@@ -103,6 +103,16 @@ def audit_document(document):
             "Verifikasi definisi simbol, satuan, penomoran persamaan, dan konsistensi notasi secara manual."
         ))
 
+    # Indikator klaim kausal: verifikasi apakah desain penelitian mendukungnya.
+    for i, line in enumerate(text.splitlines(), 1):
+        if re.search(r"\b(causes?|caused|causing|menyebabkan)\b", line, re.I):
+            findings.append(finding(
+                "Metodologi", "Sedang", f"Baris teks {i}",
+                "Pernyataan yang mengindikasikan hubungan sebab-akibat terdeteksi.",
+                "Pastikan desain penelitian dan bukti empiris mendukung klaim kausal; "
+                "studi korelasional tidak otomatis membuktikan sebab-akibat."
+            ))
+
     # Pemeriksaan gaya akademik berbasis aturan, bukan grammar checker penuh.
     for i, line in enumerate(text.splitlines(), 1):
         stripped = line.strip()
